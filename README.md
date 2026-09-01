@@ -168,8 +168,7 @@ auth layer yet.
 
 ## Roadmap
 
-See [PROJECT_PLAN.md](/c:/Users/SnehaNagaraju/Projects/MCP Auditor/PROJECT_PLAN.md)
-for the full phase-by-phase plan (architecture, domain model, scoring
-system, coding standards, and Phase 0–9 breakdown with status). Phases are
-implemented incrementally; later phases are not started until the current
-phase is confirmed complete.
+See [PROJECT_PLAN.md](./PROJECT_PLAN.md) for the full phase-by-phase plan
+(architecture, domain model, scoring system, coding standards, and Phase
+0–9 breakdown with status). Phases are implemented incrementally; later
+phases are not started until the current phase is confirmed complete.

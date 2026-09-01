@@ -407,5 +407,5 @@ This project audits potentially untrusted MCP servers. Therefore:
 | 8 | Reporting | ⏳ Not started |
 | 9 | Hardening and Production Readiness | ⏳ Not started |
 
-See [README.md](/c:/Users/SnehaNagaraju/Projects/MCP Auditor/README.md) for
-setup/run instructions and current API endpoints.
+See [README.md](./README.md) for setup/run instructions and current API
+endpoints.
