@@ -36,6 +36,11 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://mcp:mcp@localhost:5432/mcp_auditor"
     redis_url: str = "redis://localhost:6379/0"
 
+    # Fernet key used to encrypt sensitive fields (e.g. MCPServer.connection_config)
+    # at rest. Must be a urlsafe-base64-encoded 32-byte key. Generate with:
+    #   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+    encryption_key: str = ""
+
     @property
     def is_development(self) -> bool:
         return self.app_env.lower() == "development"

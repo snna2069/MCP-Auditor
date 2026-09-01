@@ -5,7 +5,10 @@ exclude = [".venv", "alembic/versions"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
-ignore = []
+# B008: FastAPI's `Depends(...)` in argument defaults is the documented,
+# idiomatic pattern and is safe (calls are resolved once per request by
+# FastAPI's DI system, not at import time).
+ignore = ["B008"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]
