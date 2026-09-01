@@ -168,7 +168,8 @@ auth layer yet.
 
 ## Roadmap
 
-See the phased implementation plan (Phase 1: MCP server ingestion, Phase 2+:
-auditing engine, scoring, etc.) for what's next. Phases are implemented
-incrementally; later phases are not started until the current phase is
-confirmed complete.
+See [PROJECT_PLAN.md](/c:/Users/SnehaNagaraju/Projects/MCP Auditor/PROJECT_PLAN.md)
+for the full phase-by-phase plan (architecture, domain model, scoring
+system, coding standards, and Phase 0–9 breakdown with status). Phases are
+implemented incrementally; later phases are not started until the current
+phase is confirmed complete.
