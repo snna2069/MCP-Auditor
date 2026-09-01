@@ -1,4 +1,4 @@
-# MCP Server Auditor — Project Plan
+# MCP Server Auditor - Project Plan
 
 This document is the source-of-truth phased plan for building **MCP Server
 Auditor**, an application that audits Model Context Protocol (MCP) servers
@@ -12,46 +12,6 @@ The end goal: a user provides an MCP server configuration, endpoint,
 package, or connection configuration and receives a structured audit report
 with findings, evidence, severity, recommendations, and an overall risk
 score.
-
-It is transcribed and organized from the original project brief so the plan
-lives alongside the code. Update the **Status** markers as phases progress.
-Phases are implemented **incrementally, one at a time** — do not start a new
-phase until the current one is confirmed complete.
-
----
-
-## Working Principles
-
-- Think about architecture before implementation.
-- Prefer simple, maintainable solutions over unnecessary abstraction.
-- Build incrementally — do not attempt to build the entire platform at once.
-- Work phase by phase; wait for confirmation before starting a new major
-  phase unless explicitly instructed to continue.
-- Keep the application runnable at the end of every phase.
-- Add tests for critical logic as the project grows.
-- Avoid premature microservices.
-- Do not invent MCP behavior — follow the actual MCP specification, and
-  isolate protocol-specific code so it can be updated as the ecosystem
-  evolves.
-- When requirements are ambiguous, make a reasonable engineering
-  recommendation and explain the tradeoff.
-
-## Staff Engineer Working Style
-
-For every implementation task:
-
-1. Restate the immediate objective briefly.
-2. Inspect the existing repository structure.
-3. Propose the smallest correct implementation.
-4. Identify files to create or modify.
-5. Implement.
-6. Run formatting and tests.
-7. Summarize: what changed, why, how to run it, what remains, and the
-   recommended next step.
-
-Do not silently introduce major dependencies — explain why a new dependency
-is needed, and prefer a simpler existing dependency if one can solve the
-problem.
 
 ---
 
@@ -148,25 +108,25 @@ auditing engine can operate on pure domain objects.
 
 ## Audit Dimensions
 
-1. **Tool Definition Quality** — clear names, accurate descriptions, valid
+1. **Tool Definition Quality** - clear names, accurate descriptions, valid
    input schemas, correctly defined required parameters, disclosed
    dangerous actions/side effects/permissions. A description hiding
    destructive behavior (e.g. `delete_file`) should generate a
    high-severity finding.
-2. **Capability and Permission Risk** — normalized capability model
+2. **Capability and Permission Risk** - normalized capability model
    (`READ_ONLY`, `DATA_WRITE`, `FILE_SYSTEM`, `NETWORK`,
    `SHELL_EXECUTION`, `DATABASE`, `SECRETS_ACCESS`, `IDENTITY_ACCESS`,
    `INFRASTRUCTURE`, `DESTRUCTIVE_OPERATION`). Risk scores must not be
-   hardcoded throughout the app — use a centralized scoring configuration.
-3. **Prompt Injection Risk** — tool output containing instructions directed
+   hardcoded throughout the app - use a centralized scoring configuration.
+3. **Prompt Injection Risk** - tool output containing instructions directed
    at the model, attempts to override system behavior, hidden/indirect
    instructions, exfiltration encouragement, claims of authority,
    instructions disguised as data. Adversarial payloads should be reusable
    fixtures the auditor can inject into controlled test scenarios.
-4. **Hallucination and Reliability Risk** — unverifiable capability claims,
+4. **Hallucination and Reliability Risk** - unverifiable capability claims,
    ambiguous output schemas, inconsistent error handling, missing
    provenance, results confusable with authoritative instructions.
-5. **Side Effect Analysis** — every tool classified `NONE`, `LOW`,
+5. **Side Effect Analysis** - every tool classified `NONE`, `LOW`,
    `MODERATE`, `HIGH`, or `CRITICAL` (e.g. search = `NONE`/`LOW`, create DB
    record = `MODERATE`, send email = `HIGH`, delete cloud resources =
    `CRITICAL`). Side effects influence the overall risk score.
@@ -189,7 +149,7 @@ Transparent, explainable scoring:
 
 ## Phased Implementation Plan
 
-### Phase 0 — Project Foundation ✅ Complete
+### Phase 0 - Project Foundation ✅ Complete
 
 **Goal:** Create a clean, runnable development environment.
 
@@ -205,7 +165,7 @@ documented commands; `GET /health` works; frontend shows a basic dashboard;
 the application can connect to the database; at least one backend smoke
 test exists.
 
-### Phase 1 — MCP Server Ingestion ✅ Complete
+### Phase 1 - MCP Server Ingestion ✅ Complete
 
 **Goal:** Allow the system to register an MCP server configuration.
 
@@ -218,7 +178,7 @@ test exists.
 
 **Definition of done:** A user can create and retrieve MCP server records.
 
-### Phase 2 — MCP Discovery ⏳ Not started
+### Phase 2 - MCP Discovery ⏳ Not started
 
 **Goal:** Connect to supported MCP servers and discover their available
 tools.
@@ -234,7 +194,7 @@ tools.
 **Definition of done:** The application can discover tools from a
 supported MCP server and persist normalized metadata.
 
-### Phase 3 — Audit Engine V1 ⏳ Not started
+### Phase 3 - Audit Engine V1 ⏳ Not started
 
 **Goal:** Create the first deterministic audit engine.
 
@@ -250,7 +210,7 @@ supported MCP server and persist normalized metadata.
 **Definition of done:** A known set of sample MCP tools produces
 deterministic findings.
 
-### Phase 4 — Risk Scoring Engine ⏳ Not started
+### Phase 4 - Risk Scoring Engine ⏳ Not started
 
 **Goal:** Convert findings into an explainable score.
 
@@ -262,7 +222,7 @@ deterministic findings.
 **Definition of done:** Given the same audit findings, scoring is
 deterministic and explainable.
 
-### Phase 5 — Audit Execution Pipeline ⏳ Not started
+### Phase 5 - Audit Execution Pipeline ⏳ Not started
 
 **Goal:** Allow users to trigger full audits.
 
@@ -275,7 +235,7 @@ deterministic and explainable.
 
 **Definition of done:** A user can trigger an audit and poll for results.
 
-### Phase 6 — Security Test Harness ⏳ Not started
+### Phase 6 - Security Test Harness ⏳ Not started
 
 **Goal:** Add controlled adversarial testing.
 
@@ -285,13 +245,13 @@ deterministic and explainable.
 - Each test payload has: `id`, `category`, `payload`, `expected_detection`,
   `severity`, `description`.
 - **Important:** do not execute destructive tests against real user
-  infrastructure — all testing occurs in controlled fixtures or explicitly
+  infrastructure - all testing occurs in controlled fixtures or explicitly
   authorized environments.
 
 **Definition of done:** The system can evaluate known malicious or
 suspicious tool-output scenarios and generate findings.
 
-### Phase 7 — Frontend Audit Dashboard ⏳ Not started
+### Phase 7 - Frontend Audit Dashboard ⏳ Not started
 
 **Goal:** Build a usable interface.
 
@@ -303,7 +263,7 @@ suspicious tool-output scenarios and generate findings.
 - Requirements: responsive layout, loading/error/empty states, strong
   visual hierarchy, don't over-engineer animations.
 
-### Phase 8 — Reporting ⏳ Not started
+### Phase 8 - Reporting ⏳ Not started
 
 **Goal:** Generate shareable audit reports.
 
@@ -313,7 +273,7 @@ suspicious tool-output scenarios and generate findings.
   timestamp.
 - Reports must be reproducible.
 
-### Phase 9 — Hardening and Production Readiness ⏳ Not started
+### Phase 9 - Hardening and Production Readiness ⏳ Not started
 
 Add: authentication, authorization, rate limiting, secret management,
 audit logs, input validation, connection timeouts, resource limits, worker
@@ -329,7 +289,7 @@ CI/CD, security review, threat model.
 - Pydantic for request and response validation.
 - Clear separation between API, services, repositories, and domain logic.
 - Async where it provides real value; avoid unnecessary async abstractions.
-- Small, focused modules — no giant utility files.
+- Small, focused modules - no giant utility files.
 
 **TypeScript:**
 - Strict mode; avoid `any`.
@@ -358,7 +318,7 @@ GET    /audits/{id}
 GET    /audits/{id}/findings
 ```
 
-Avoid exposing database models directly through the API — use dedicated
+Avoid exposing database models directly through the API - use dedicated
 request and response schemas.
 
 ## Error Handling

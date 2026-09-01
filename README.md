@@ -115,7 +115,7 @@ npm run lint
 
 ### Health
 
-- `GET /health` — liveness/readiness check.
+- `GET /health` - liveness/readiness check.
 
 ### MCP Servers (Phase 1)
 
@@ -123,11 +123,11 @@ Register and manage MCP server configurations to be audited. Supported
 `source_type` values: `LOCAL_COMMAND`, `HTTP`, `MANUAL_CONFIGURATION`
 (`SSE` and `PACKAGE` are modeled but not yet accepted). `connection_config`
 is validated against a schema specific to `source_type` and is encrypted at
-rest (see `ENCRYPTION_KEY` in `.env.example`) — it is never stored in
+rest (see `ENCRYPTION_KEY` in `.env.example`) - it is never stored in
 plaintext, though it is returned decrypted to API callers since there is no
 auth layer yet.
 
-- `POST /servers` — create a server. Body:
+- `POST /servers` - create a server. Body:
   ```json
   {
     "name": "weather-mcp",
@@ -135,9 +135,9 @@ auth layer yet.
     "connection_config": { "url": "https://example.com/mcp", "headers": {} }
   }
   ```
-- `GET /servers` — list servers (supports `skip`/`limit` query params).
-- `GET /servers/{id}` — fetch a single server, 404 if not found.
-- `DELETE /servers/{id}` — delete a server, 404 if not found.
+- `GET /servers` - list servers (supports `skip`/`limit` query params).
+- `GET /servers/{id}` - fetch a single server, 404 if not found.
+- `DELETE /servers/{id}` - delete a server, 404 if not found.
 
 ## Definition of Done (Phase 0)
 
