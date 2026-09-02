@@ -19,7 +19,10 @@ settings = get_settings()
 celery_app = Celery(
     "mcp_server_auditor",
     broker=settings.redis_url,
-    backend=settings.redis_url,
+    # No result backend: Audit status/results are tracked in our own
+    # database (see app.models.audit), not via Celery's result store. A
+    # configured result backend would otherwise maintain its own
+    # persistent, independently-retrying connection even when idle.
     include=["app.workers.audit_worker"],
 )
 
@@ -29,4 +32,12 @@ celery_app.conf.update(
     result_serializer="json",
     timezone="UTC",
     enable_utc=True,
+    task_ignore_result=True,
+    # Fail fast rather than retrying for ~20 attempts (Celery/kombu's
+    # default) if the broker is unreachable: enqueueing a task happens
+    # synchronously during the POST /servers/{id}/audits request, so a slow
+    # broker would otherwise hang that HTTP request for a long time.
+    broker_connection_retry_on_startup=False,
+    broker_connection_retry=False,
+    broker_connection_timeout=2,
 )

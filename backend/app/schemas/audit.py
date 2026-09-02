@@ -7,6 +7,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict
 
 from app.models.enums import AuditCategory, AuditStatus, RiskLevel, Severity
+from app.schemas.score_result import ScoreContributor
 
 
 class AuditRead(BaseModel):
@@ -24,6 +25,21 @@ class AuditRead(BaseModel):
     overall_score: float | None
     risk_level: RiskLevel | None
     error_message: str | None
+
+
+class AuditDetailRead(AuditRead):
+    """AuditRead plus the full explainable score breakdown.
+
+    category_scores/severity_breakdown/score_contributors are not persisted
+    columns - they're recomputed from the audit's persisted AuditFinding
+    rows at request time (RiskScorer is a pure function), so they can never
+    drift from the findings actually stored. None while the audit has not
+    completed (no findings/score exist yet, or it failed before scoring).
+    """
+
+    category_scores: dict[AuditCategory, float] | None
+    severity_breakdown: dict[Severity, int] | None
+    score_contributors: list[ScoreContributor] | None
 
 
 class AuditFindingRead(BaseModel):

@@ -47,6 +47,13 @@ def test_discover_manual_server_persists_tools(client: TestClient) -> None:
     assert len(tools_response.json()) == 1
     assert tools_response.json()[0]["name"] == "lookup_order"
 
+    server_response = client.get(f"/servers/{server_id}")
+    assert server_response.status_code == 200
+    server_body = server_response.json()
+    assert server_body["last_discovery_status"] == "SUCCESS"
+    assert server_body["last_discovered_at"] is not None
+    assert server_body["last_discovery_error"] is None
+
 
 def test_tools_endpoint_empty_before_discovery(client: TestClient) -> None:
     server_id = _create_manual_server_with_tools(client)

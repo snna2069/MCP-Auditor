@@ -22,6 +22,9 @@ def _to_read_schema(server: MCPServer) -> MCPServerRead:
         connection_config=MCPServerService.decrypt_connection_config(server),
         created_at=server.created_at,
         updated_at=server.updated_at,
+        last_discovery_status=server.last_discovery_status,
+        last_discovered_at=server.last_discovered_at,
+        last_discovery_error=server.last_discovery_error,
     )
 
 

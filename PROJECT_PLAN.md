@@ -251,7 +251,7 @@ deterministic and explainable.
 **Definition of done:** The system can evaluate known malicious or
 suspicious tool-output scenarios and generate findings.
 
-### Phase 7 - Frontend Audit Dashboard ⏳ Not started
+### Phase 7 - Frontend Audit Dashboard ✅ Complete
 
 **Goal:** Build a usable interface.
 
@@ -363,7 +363,7 @@ This project audits potentially untrusted MCP servers. Therefore:
 | 4 | Risk Scoring Engine | ✅ Complete |
 | 5 | Audit Execution Pipeline | ✅ Complete |
 | 6 | Security Test Harness | ✅ Complete |
-| 7 | Frontend Audit Dashboard | ⏳ Not started |
+| 7 | Frontend Audit Dashboard | 🚧 WIP |
 | 8 | Reporting | ⏳ Not started |
 | 9 | Hardening and Production Readiness | ⏳ Not started |
 

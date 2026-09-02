@@ -15,7 +15,7 @@ from typing import Annotated, Any
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, model_validator
 
-from app.models.enums import SUPPORTED_SOURCE_TYPES, SourceType
+from app.models.enums import SUPPORTED_SOURCE_TYPES, DiscoveryStatus, SourceType
 
 
 class LocalCommandConfig(BaseModel):
@@ -94,3 +94,6 @@ class MCPServerRead(BaseModel):
     connection_config: dict[str, Any]
     created_at: datetime
     updated_at: datetime
+    last_discovery_status: DiscoveryStatus | None = None
+    last_discovered_at: datetime | None = None
+    last_discovery_error: str | None = None

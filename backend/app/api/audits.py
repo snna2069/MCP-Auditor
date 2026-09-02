@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.exceptions import AuditNotFoundError, MCPServerNotFoundError
-from app.schemas.audit import AuditFindingRead, AuditRead
+from app.schemas.audit import AuditDetailRead, AuditFindingRead, AuditRead
 from app.services.audit_service import AuditService
 
 router = APIRouter(tags=["audits"])
@@ -40,14 +40,20 @@ def list_audits(
     return [AuditRead.model_validate(audit) for audit in audits]
 
 
-@router.get("/audits/{audit_id}", response_model=AuditRead)
-def get_audit(audit_id: uuid.UUID, db: Session = Depends(get_db)) -> AuditRead:
+@router.get("/audits/{audit_id}", response_model=AuditDetailRead)
+def get_audit(audit_id: uuid.UUID, db: Session = Depends(get_db)) -> AuditDetailRead:
     service = AuditService(db)
     try:
-        audit = service.get_audit(audit_id)
+        audit, score = service.get_audit_with_score(audit_id)
     except AuditNotFoundError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    return AuditRead.model_validate(audit)
+
+    return AuditDetailRead(
+        **AuditRead.model_validate(audit).model_dump(),
+        category_scores=score.category_scores if score else None,
+        severity_breakdown=score.severity_breakdown if score else None,
+        score_contributors=score.score_contributors if score else None,
+    )
 
 
 @router.get("/audits/{audit_id}/findings", response_model=list[AuditFindingRead])
