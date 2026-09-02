@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     #   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
     encryption_key: str = ""
 
+    # Per-connection timeout (seconds) when discovering tools from an MCP server.
+    mcp_discovery_timeout_seconds: float = 15.0
+
     @property
     def is_development(self) -> bool:
         return self.app_env.lower() == "development"

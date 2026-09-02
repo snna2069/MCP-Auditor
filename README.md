@@ -6,9 +6,10 @@ other reliability/security concerns, producing a structured audit report
 with findings, evidence, severity, and an overall risk score.
 
 This repository is being built incrementally, phase by phase. **Phase 0
-(project foundation)** and **Phase 1 (MCP server ingestion)** are complete: a
-runnable FastAPI backend with server registration endpoints, a Next.js
-frontend, and PostgreSQL/Redis infrastructure via Docker Compose.
+(project foundation)**, **Phase 1 (MCP server ingestion)**, and **Phase 2
+(MCP discovery)** are complete: a runnable FastAPI backend with server
+registration and tool-discovery endpoints, a Next.js frontend, and
+PostgreSQL/Redis infrastructure via Docker Compose.
 
 ## Project Structure
 
@@ -139,6 +140,23 @@ auth layer yet.
 - `GET /servers/{id}` - fetch a single server, 404 if not found.
 - `DELETE /servers/{id}` - delete a server, 404 if not found.
 
+### MCP Discovery (Phase 2)
+
+Connects to a registered server and discovers its available tools per the
+[MCP specification](https://modelcontextprotocol.io/specification/2025-06-18)
+(`initialize` -> `initialized` -> `tools/list`, with pagination). Supports
+the `stdio` transport (`LOCAL_COMMAND`) and `Streamable HTTP` transport
+(`HTTP`); `MANUAL_CONFIGURATION` servers read tools directly from a
+`details.tools` array instead of connecting live. Discovered tools are
+normalized and persisted, replacing the server's previous tool snapshot.
+
+- `POST /servers/{id}/discover` - run discovery now. Always returns 200; the
+  body's `status` field is `SUCCESS` or `FAILED` (e.g. unreachable server),
+  with a sanitized `error` message on failure. 404 only if the server
+  itself doesn't exist.
+- `GET /servers/{id}/tools` - return the most recently discovered tools
+  without making a live connection.
+
 ## Definition of Done (Phase 0)
 
 - [x] `GET /health` responds with app status/version/environment.
@@ -165,6 +183,23 @@ auth layer yet.
       `alembic upgrade head` against a live Postgres to apply it).
 - [x] Tests cover create/list/get/delete, validation errors, and the
       encryption round trip.
+
+## Definition of Done (Phase 2)
+
+- [x] `MCPClient` abstraction (`backend/app/mcp/`) isolated from audit logic,
+      with `StdioMCPClient`, `HttpMCPClient`, and `ManualMCPClient`.
+- [x] Discovery follows the real MCP handshake (`initialize` /
+      `notifications/initialized` / `tools/list`, with pagination) - not
+      invented protocol behavior.
+- [x] Connects safely: per-attempt timeout, sanitized error messages (no
+      secrets/env vars/headers logged or returned).
+- [x] Discovered tools normalized into `ToolProfile` and persisted
+      (`mcp_server_tools` table); `MCPServer` tracks last discovery
+      status/timestamp/error.
+- [x] `POST /servers/{id}/discover` and `GET /servers/{id}/tools` implemented.
+- [x] Tests cover all three clients (real subprocess for stdio, mocked
+      transport for HTTP, no I/O for manual) plus the end-to-end API flow,
+      including timeout, crash, and unreachable-server failure paths.
 
 ## Roadmap
 

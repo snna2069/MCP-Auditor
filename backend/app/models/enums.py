@@ -22,3 +22,10 @@ SUPPORTED_SOURCE_TYPES: frozenset[SourceType] = frozenset(
         SourceType.MANUAL_CONFIGURATION,
     }
 )
+
+
+class DiscoveryStatus(enum.StrEnum):
+    """Outcome of the most recent tool-discovery attempt for a server."""
+
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"

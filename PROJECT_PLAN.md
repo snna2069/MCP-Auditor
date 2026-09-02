@@ -178,7 +178,7 @@ test exists.
 
 **Definition of done:** A user can create and retrieve MCP server records.
 
-### Phase 2 - MCP Discovery ⏳ Not started
+### Phase 2 - MCP Discovery ✅ Complete
 
 **Goal:** Connect to supported MCP servers and discover their available
 tools.
@@ -358,7 +358,7 @@ This project audits potentially untrusted MCP servers. Therefore:
 |---|---|---|
 | 0 | Project Foundation | ✅ Complete |
 | 1 | MCP Server Ingestion | ✅ Complete |
-| 2 | MCP Discovery | ⏳ Not started |
+| 2 | MCP Discovery | ✅ Complete |
 | 3 | Audit Engine V1 | ⏳ Not started |
 | 4 | Risk Scoring Engine | ⏳ Not started |
 | 5 | Audit Execution Pipeline | ⏳ Not started |
