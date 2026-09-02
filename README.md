@@ -8,10 +8,10 @@ with findings, evidence, severity, and an overall risk score.
 This repository is being built incrementally, phase by phase. **Phase 0
 (project foundation)**, **Phase 1 (MCP server ingestion)**, **Phase 2 (MCP
 discovery)**, **Phase 3 (audit engine v1)**, **Phase 4 (risk scoring
-engine)**, and **Phase 5 (audit execution pipeline)** are complete: a
-runnable FastAPI backend with server registration, tool-discovery, and
-asynchronous full-audit endpoints, a Next.js frontend, and PostgreSQL/Redis
-infrastructure via Docker Compose.
+engine)**, **Phase 5 (audit execution pipeline)**, and **Phase 6 (security
+test harness)** are complete: a runnable FastAPI backend with server
+registration, tool-discovery, and asynchronous full-audit endpoints, a
+Next.js frontend, and PostgreSQL/Redis infrastructure via Docker Compose.
 
 ## Project Structure
 
@@ -248,6 +248,29 @@ Audit lifecycle: `PENDING` -> `RUNNING` -> `COMPLETED` / `FAILED`. The
 pipeline never lets an exception escape the worker task - failures are
 always recorded on the `Audit` row instead of crashing it.
 
+### Security Test Harness (Phase 6)
+
+`backend/app/security/` is a reusable adversarial-content library, kept
+separate from the auditors above since it inspects tool *output* (untrusted
+content a tool might return), not tool metadata. Per the project's security
+principles, nothing here executes a real MCP tool - it only scans text
+handed to it (curated fixtures today; a future, explicitly-authorized
+invocation step could feed it real tool-call output).
+
+- `SecurityTestPayload` fixtures (`id`, `category`, `payload`,
+  `expected_detection`, `severity`, `description`) cover all six categories
+  - `PROMPT_INJECTION`, `INSTRUCTION_OVERRIDE`,
+  `DATA_EXFILTRATION_ATTEMPT`, `AUTHORITY_IMPERSONATION`,
+  `HIDDEN_INSTRUCTIONS`, `TOOL_CONFUSION` - plus benign "negative control"
+  payloads proving the detector doesn't flag ordinary tool output.
+- `PromptInjectionDetector.scan(text, tool_name=...)` deterministically
+  matches text against per-category regex heuristics and returns
+  `AuditFinding`s under `AuditCategory.PROMPT_INJECTION_RISK`, already
+  compatible with the existing scoring/persistence layers if wired into a
+  live pipeline later.
+
+Tests prove every malicious fixture is detected and every benign one is not.
+
 ## Definition of Done (Phase 0)
 
 - [x] `GET /health` responds with app status/version/environment.
@@ -338,6 +361,22 @@ always recorded on the `Audit` row instead of crashing it.
       missing server, listing/filtering, and 404s for missing
       audits/findings - using Celery's eager mode so no live broker is
       required to test the pipeline deterministically.
+
+## Definition of Done (Phase 6)
+
+- [x] Reusable adversarial payload library (`backend/app/security/`)
+      covering all six categories: `PROMPT_INJECTION`,
+      `INSTRUCTION_OVERRIDE`, `DATA_EXFILTRATION_ATTEMPT`,
+      `AUTHORITY_IMPERSONATION`, `HIDDEN_INSTRUCTIONS`, `TOOL_CONFUSION`.
+- [x] Each payload has `id`, `category`, `payload`, `expected_detection`,
+      `severity`, `description`, per the plan.
+- [x] `PromptInjectionDetector` deterministically evaluates text and
+      generates `AuditFinding`s - no real tool is ever executed; testing
+      uses controlled fixtures only, per the project's security principles.
+- [x] Tests prove every malicious fixture is detected and every benign
+      ("negative control") fixture is not, satisfying "the system can
+      evaluate known malicious or suspicious tool-output scenarios and
+      generate findings."
 
 ## Roadmap
 

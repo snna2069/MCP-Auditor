@@ -104,3 +104,19 @@ class AuditStatus(enum.StrEnum):
     RUNNING = "RUNNING"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
+
+
+class SecurityTestCategory(enum.StrEnum):
+    """Categories of adversarial tool-output content (Phase 6).
+
+    Findings produced by the detector that uses these are recorded under
+    AuditCategory.PROMPT_INJECTION_RISK; this enum is a finer-grained
+    breakdown of *which kind* of prompt-injection-style content was found.
+    """
+
+    PROMPT_INJECTION = "PROMPT_INJECTION"
+    INSTRUCTION_OVERRIDE = "INSTRUCTION_OVERRIDE"
+    DATA_EXFILTRATION_ATTEMPT = "DATA_EXFILTRATION_ATTEMPT"
+    AUTHORITY_IMPERSONATION = "AUTHORITY_IMPERSONATION"
+    HIDDEN_INSTRUCTIONS = "HIDDEN_INSTRUCTIONS"
+    TOOL_CONFUSION = "TOOL_CONFUSION"

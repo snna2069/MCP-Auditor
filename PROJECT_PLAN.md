@@ -235,7 +235,7 @@ deterministic and explainable.
 
 **Definition of done:** A user can trigger an audit and poll for results.
 
-### Phase 6 - Security Test Harness ⏳ Not started
+### Phase 6 - Security Test Harness ✅ Complete
 
 **Goal:** Add controlled adversarial testing.
 
@@ -362,7 +362,7 @@ This project audits potentially untrusted MCP servers. Therefore:
 | 3 | Audit Engine V1 | ✅ Complete |
 | 4 | Risk Scoring Engine | ✅ Complete |
 | 5 | Audit Execution Pipeline | ✅ Complete |
-| 6 | Security Test Harness | ⏳ Not started |
+| 6 | Security Test Harness | ✅ Complete |
 | 7 | Frontend Audit Dashboard | ⏳ Not started |
 | 8 | Reporting | ⏳ Not started |
 | 9 | Hardening and Production Readiness | ⏳ Not started |
