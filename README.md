@@ -7,9 +7,10 @@ with findings, evidence, severity, and an overall risk score.
 
 This repository is being built incrementally, phase by phase. **Phase 0
 (project foundation)**, **Phase 1 (MCP server ingestion)**, **Phase 2 (MCP
-discovery)**, and **Phase 3 (audit engine v1)** are complete: a runnable
-FastAPI backend with server registration, tool-discovery endpoints, and a
-deterministic auditing engine, a Next.js frontend, and PostgreSQL/Redis
+discovery)**, **Phase 3 (audit engine v1)**, and **Phase 4 (risk scoring
+engine)** are complete: a runnable FastAPI backend with server
+registration, tool-discovery endpoints, a deterministic auditing engine,
+and an explainable risk scorer, a Next.js frontend, and PostgreSQL/Redis
 infrastructure via Docker Compose.
 
 ## Project Structure
@@ -183,6 +184,31 @@ keyword heuristics, no ML/network calls), so audits are reproducible.
 `app.auditors.registry.run_auditors(tool)` runs all four against a
 `ToolProfile` and returns the combined findings.
 
+### Risk Scoring Engine (Phase 4)
+
+`backend/app/scoring/` converts a list of `AuditFinding`s into an
+explainable score via `RiskScorer.score(findings)`. Every number that
+influences a score lives in one place, `app.scoring.config.ScoringConfig`
+(baseline, per-severity weights, per-category weights, risk-level
+thresholds) - nothing is hardcoded in the auditors or elsewhere. The result
+(`ScoreResult`) includes:
+
+- `overall_score` - starts at the configurable baseline (100) and is only
+  ever reduced by findings, clamped to a minimum of 0.
+- `risk_level` - `LOW`/`MODERATE`/`HIGH`/`CRITICAL`, from configurable
+  score thresholds.
+- `category_scores` - the same baseline-minus-deductions scoring applied
+  independently per audit dimension (each category is its own lens, not a
+  partition of one shared budget).
+- `severity_breakdown` - finding counts per severity.
+- `score_contributors` - one entry per finding (tool, category, severity,
+  weights, exact point contribution), sorted by impact, so the API can
+  eventually answer "why did this server receive a score of 62?".
+
+Given the same findings and config, scoring is always identical (no
+randomness) - proven by dedicated determinism tests, including an
+end-to-end auditors -> scorer pipeline test.
+
 ## Definition of Done (Phase 0)
 
 - [x] `GET /health` responds with app status/version/environment.
@@ -241,6 +267,20 @@ keyword heuristics, no ML/network calls), so audits are reproducible.
       record (MODERATE), delete cloud resources (CRITICAL).
 - [x] A known set of sample MCP tools produces identical findings across
       repeated runs (determinism test).
+
+## Definition of Done (Phase 4)
+
+- [x] `RiskScorer` (`backend/app/scoring/`) returns `overall_score`,
+      `risk_level`, `category_scores`, `severity_breakdown`, and
+      `score_contributors`.
+- [x] Starts at a configurable baseline, applies weighted deductions by
+      severity and category, and never drops below zero.
+- [x] All weights/thresholds centralized in `ScoringConfig` - none
+      hardcoded in auditors or services; configs are swappable per call.
+- [x] No black-box scoring: `score_contributors` explains exactly how much
+      each finding contributed.
+- [x] Given the same findings, scoring is deterministic (unit tests plus an
+      end-to-end auditors -> scorer pipeline test on sample tools).
 
 ## Roadmap
 

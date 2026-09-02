@@ -82,3 +82,16 @@ class SideEffectLevel(enum.StrEnum):
     MODERATE = "MODERATE"
     HIGH = "HIGH"
     CRITICAL = "CRITICAL"
+
+
+class RiskLevel(enum.StrEnum):
+    """Overall risk classification derived from a numerical score.
+
+    Thresholds are configurable (see app.scoring.config.ScoringConfig) - this
+    enum only defines the fixed set of classification labels.
+    """
+
+    LOW = "LOW"
+    MODERATE = "MODERATE"
+    HIGH = "HIGH"
+    CRITICAL = "CRITICAL"

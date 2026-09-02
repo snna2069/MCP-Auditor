@@ -210,7 +210,7 @@ supported MCP server and persist normalized metadata.
 **Definition of done:** A known set of sample MCP tools produces
 deterministic findings.
 
-### Phase 4 - Risk Scoring Engine ⏳ Not started
+### Phase 4 - Risk Scoring Engine ✅ Complete
 
 **Goal:** Convert findings into an explainable score.
 
@@ -360,7 +360,7 @@ This project audits potentially untrusted MCP servers. Therefore:
 | 1 | MCP Server Ingestion | ✅ Complete |
 | 2 | MCP Discovery | ✅ Complete |
 | 3 | Audit Engine V1 | ✅ Complete |
-| 4 | Risk Scoring Engine | ⏳ Not started |
+| 4 | Risk Scoring Engine | ✅ Complete |
 | 5 | Audit Execution Pipeline | ⏳ Not started |
 | 6 | Security Test Harness | ⏳ Not started |
 | 7 | Frontend Audit Dashboard | ⏳ Not started |
