@@ -17,7 +17,7 @@ from app.models.enums import DiscoveryStatus
 from app.models.mcp_server import MCPServer
 from app.models.mcp_server_tool import MCPServerTool
 from app.repositories.mcp_server_tool_repository import MCPServerToolRepository
-from app.schemas.tool_profile import ToolProfile
+from app.schemas.tool_profile import ToolAnnotations, ToolProfile
 from app.services.mcp_server_service import MCPServerService
 
 
@@ -77,6 +77,22 @@ def _to_row(profile: ToolProfile) -> MCPServerTool:
         input_schema=profile.input_schema,
         output_schema=profile.output_schema,
         annotations=(profile.annotations.model_dump(mode="json") if profile.annotations else None),
+    )
+
+
+def tool_profile_from_row(tool: MCPServerTool) -> ToolProfile:
+    """Reconstruct a ToolProfile domain object from a persisted row.
+
+    Used by the audit pipeline (Phase 5) to run auditors against the tools
+    a discovery run just persisted, without re-querying the live server.
+    """
+    return ToolProfile(
+        name=tool.name,
+        title=tool.title,
+        description=tool.description,
+        input_schema=tool.input_schema,
+        output_schema=tool.output_schema,
+        annotations=(ToolAnnotations(**tool.annotations) if tool.annotations else None),
     )
 
 

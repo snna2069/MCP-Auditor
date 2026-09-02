@@ -13,14 +13,26 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.core import database
 from app.core.database import get_db
 from app.main import app
 from app.models import Base
+from app.workers.celery_app import celery_app
+
+# Audits are triggered via Celery's `.delay()`. Running eagerly (in-process,
+# no broker/worker required) keeps tests deterministic and independent of
+# any real Redis instance - a standard, documented Celery testing pattern.
+celery_app.conf.update(task_always_eager=True, task_eager_propagates=True)
 
 
 @pytest.fixture
-def db_session():
-    """A SQLite in-memory database, isolated per test."""
+def db_session(monkeypatch: pytest.MonkeyPatch):
+    """A SQLite in-memory database, isolated per test.
+
+    Also patches app.core.database.SessionLocal so a Celery task executed
+    eagerly during a test (see app/workers/audit_worker.py) reads/writes
+    the same in-memory database as the API request that triggered it.
+    """
     engine = create_engine(
         "sqlite:///:memory:",
         connect_args={"check_same_thread": False},
@@ -30,6 +42,7 @@ def db_session():
     testing_session_local = sessionmaker(
         bind=engine, autocommit=False, autoflush=False, future=True
     )
+    monkeypatch.setattr(database, "SessionLocal", testing_session_local)
 
     session = testing_session_local()
     try:

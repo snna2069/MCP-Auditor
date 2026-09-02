@@ -13,6 +13,11 @@ from app.auditors.side_effect_auditor import SideEffectAuditor
 from app.schemas.audit_finding import AuditFinding
 from app.schemas.tool_profile import ToolProfile
 
+# Recorded on each Audit (Audit.audit_version) so results can be tied back
+# to the auditor/scoring logic version that produced them. Bump when
+# auditor behavior changes in a way that could change findings.
+AUDITOR_ENGINE_VERSION = "1.0.0"
+
 DEFAULT_AUDITORS: tuple[BaseAuditor, ...] = (
     DescriptionAuditor(),
     SchemaAuditor(),

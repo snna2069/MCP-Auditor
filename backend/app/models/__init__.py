@@ -15,5 +15,7 @@ class Base(DeclarativeBase):
 # Imported at the bottom (after Base is defined) so submodules can `from
 # app.models import Base`, and so Base.metadata is populated with every
 # table for Alembic autogeneration / `create_all` in tests.
+from app.models.audit import Audit  # noqa: E402,F401
+from app.models.audit_finding import AuditFinding  # noqa: E402,F401
 from app.models.mcp_server import MCPServer  # noqa: E402,F401
 from app.models.mcp_server_tool import MCPServerTool  # noqa: E402,F401

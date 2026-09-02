@@ -95,3 +95,12 @@ class RiskLevel(enum.StrEnum):
     MODERATE = "MODERATE"
     HIGH = "HIGH"
     CRITICAL = "CRITICAL"
+
+
+class AuditStatus(enum.StrEnum):
+    """Lifecycle state of a single Audit execution."""
+
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"

@@ -222,7 +222,7 @@ deterministic findings.
 **Definition of done:** Given the same audit findings, scoring is
 deterministic and explainable.
 
-### Phase 5 - Audit Execution Pipeline ⏳ Not started
+### Phase 5 - Audit Execution Pipeline ✅ Complete
 
 **Goal:** Allow users to trigger full audits.
 
@@ -361,7 +361,7 @@ This project audits potentially untrusted MCP servers. Therefore:
 | 2 | MCP Discovery | ✅ Complete |
 | 3 | Audit Engine V1 | ✅ Complete |
 | 4 | Risk Scoring Engine | ✅ Complete |
-| 5 | Audit Execution Pipeline | ⏳ Not started |
+| 5 | Audit Execution Pipeline | ✅ Complete |
 | 6 | Security Test Harness | ⏳ Not started |
 | 7 | Frontend Audit Dashboard | ⏳ Not started |
 | 8 | Reporting | ⏳ Not started |

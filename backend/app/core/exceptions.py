@@ -24,3 +24,11 @@ class UnsupportedSourceTypeError(DomainError):
     def __init__(self, source_type: object) -> None:
         self.source_type = source_type
         super().__init__(f"Source type '{source_type}' is not supported yet.")
+
+
+class AuditNotFoundError(DomainError):
+    """Raised when a requested Audit does not exist."""
+
+    def __init__(self, audit_id: object) -> None:
+        self.audit_id = audit_id
+        super().__init__(f"Audit '{audit_id}' not found.")

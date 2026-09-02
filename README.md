@@ -7,10 +7,10 @@ with findings, evidence, severity, and an overall risk score.
 
 This repository is being built incrementally, phase by phase. **Phase 0
 (project foundation)**, **Phase 1 (MCP server ingestion)**, **Phase 2 (MCP
-discovery)**, **Phase 3 (audit engine v1)**, and **Phase 4 (risk scoring
-engine)** are complete: a runnable FastAPI backend with server
-registration, tool-discovery endpoints, a deterministic auditing engine,
-and an explainable risk scorer, a Next.js frontend, and PostgreSQL/Redis
+discovery)**, **Phase 3 (audit engine v1)**, **Phase 4 (risk scoring
+engine)**, and **Phase 5 (audit execution pipeline)** are complete: a
+runnable FastAPI backend with server registration, tool-discovery, and
+asynchronous full-audit endpoints, a Next.js frontend, and PostgreSQL/Redis
 infrastructure via Docker Compose.
 
 ## Project Structure
@@ -78,6 +78,23 @@ alembic upgrade head
 
 This creates the `mcp_servers` table used by the server registration API
 (see [API Endpoints](#api-endpoints) below).
+
+### Start the audit worker (Celery)
+
+Triggering an audit (`POST /servers/{id}/audits`) enqueues a background job;
+a separate worker process executes it asynchronously (requires Redis from
+step 2 above):
+
+```powershell
+cd backend
+.\.venv\Scripts\Activate.ps1
+celery -A app.workers.celery_app worker --loglevel=info
+```
+
+Without a running worker, audits will stay `PENDING` forever - `GET
+/audits/{id}` lets you poll for status. (Tests run Celery in "eager" mode
+in-process, so they don't need a real worker or Redis; see
+`backend/tests/conftest.py`.)
 
 ### Run backend tests
 
@@ -209,6 +226,28 @@ Given the same findings and config, scoring is always identical (no
 randomness) - proven by dedicated determinism tests, including an
 end-to-end auditors -> scorer pipeline test.
 
+### Audit Execution Pipeline (Phase 5)
+
+Ties the previous phases together into a triggerable, asynchronous audit.
+`POST /servers/{id}/audits` creates an `Audit` row (`PENDING`) and enqueues
+a Celery task, returning immediately; a separate worker process runs the
+pipeline: load server -> discover MCP capabilities (Phase 2, fresh every
+time) -> normalize tools -> run auditors (Phase 3) -> score (Phase 4) ->
+persist `AuditFinding` rows -> mark `COMPLETED` (or `FAILED` with a
+sanitized `error_message`, never a raw stack trace or secret).
+
+- `POST /servers/{id}/audits` - trigger an audit. Returns 202 with the
+  `Audit` in its current state (`PENDING` in real async use; may already
+  be `COMPLETED`/`FAILED` if a worker processed it immediately). 404 if the
+  server doesn't exist.
+- `GET /audits` - list audits (`skip`/`limit`, optional `server_id` filter).
+- `GET /audits/{id}` - poll a single audit's status/score/risk_level.
+- `GET /audits/{id}/findings` - list the findings persisted for an audit.
+
+Audit lifecycle: `PENDING` -> `RUNNING` -> `COMPLETED` / `FAILED`. The
+pipeline never lets an exception escape the worker task - failures are
+always recorded on the `Audit` row instead of crashing it.
+
 ## Definition of Done (Phase 0)
 
 - [x] `GET /health` responds with app status/version/environment.
@@ -281,6 +320,24 @@ end-to-end auditors -> scorer pipeline test.
       each finding contributed.
 - [x] Given the same findings, scoring is deterministic (unit tests plus an
       end-to-end auditors -> scorer pipeline test on sample tools).
+
+## Definition of Done (Phase 5)
+
+- [x] `POST /servers/{id}/audits`, `GET /audits`, `GET /audits/{id}`,
+      `GET /audits/{id}/findings` implemented.
+- [x] Audit lifecycle `PENDING` -> `RUNNING` -> `COMPLETED`/`FAILED`
+      persisted on a new `Audit` table; findings persisted on a new
+      `AuditFinding` table (hand-written migration).
+- [x] Full pipeline wired: fresh discovery -> normalize -> run all 4
+      auditors -> score -> persist -> mark complete.
+- [x] Runs asynchronously via Celery (`app/workers/`); the worker never lets
+      an exception escape (failures recorded as `FAILED` + sanitized
+      `error_message`, verified by a dedicated unit test that a raised
+      exception's message never leaks into the persisted error).
+- [x] Tests cover success (with and without findings), discovery failure,
+      missing server, listing/filtering, and 404s for missing
+      audits/findings - using Celery's eager mode so no live broker is
+      required to test the pipeline deterministically.
 
 ## Roadmap
 
