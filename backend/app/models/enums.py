@@ -29,3 +29,56 @@ class DiscoveryStatus(enum.StrEnum):
 
     SUCCESS = "SUCCESS"
     FAILED = "FAILED"
+
+
+class Severity(enum.StrEnum):
+    """Severity of a single AuditFinding."""
+
+    INFO = "INFO"
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+    CRITICAL = "CRITICAL"
+
+
+class AuditCategory(enum.StrEnum):
+    """Which audit dimension a finding belongs to.
+
+    Mirrors the five audit dimensions in PROJECT_PLAN.md. Not every category
+    has an auditor yet (PROMPT_INJECTION_RISK is Phase 6;
+    HALLUCINATION_RELIABILITY_RISK has no dedicated auditor yet) - the enum
+    is defined up front since it's a stable taxonomy, and the scoring engine
+    (Phase 4) will need it regardless of which categories currently produce
+    findings.
+    """
+
+    TOOL_DEFINITION_QUALITY = "TOOL_DEFINITION_QUALITY"
+    CAPABILITY_PERMISSION_RISK = "CAPABILITY_PERMISSION_RISK"
+    PROMPT_INJECTION_RISK = "PROMPT_INJECTION_RISK"
+    HALLUCINATION_RELIABILITY_RISK = "HALLUCINATION_RELIABILITY_RISK"
+    SIDE_EFFECT_ANALYSIS = "SIDE_EFFECT_ANALYSIS"
+
+
+class Capability(enum.StrEnum):
+    """Normalized capability tags a tool may be inferred to have."""
+
+    READ_ONLY = "READ_ONLY"
+    DATA_WRITE = "DATA_WRITE"
+    FILE_SYSTEM = "FILE_SYSTEM"
+    NETWORK = "NETWORK"
+    SHELL_EXECUTION = "SHELL_EXECUTION"
+    DATABASE = "DATABASE"
+    SECRETS_ACCESS = "SECRETS_ACCESS"
+    IDENTITY_ACCESS = "IDENTITY_ACCESS"
+    INFRASTRUCTURE = "INFRASTRUCTURE"
+    DESTRUCTIVE_OPERATION = "DESTRUCTIVE_OPERATION"
+
+
+class SideEffectLevel(enum.StrEnum):
+    """How impactful invoking a tool is expected to be."""
+
+    NONE = "NONE"
+    LOW = "LOW"
+    MODERATE = "MODERATE"
+    HIGH = "HIGH"
+    CRITICAL = "CRITICAL"

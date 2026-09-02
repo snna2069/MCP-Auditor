@@ -194,7 +194,7 @@ tools.
 **Definition of done:** The application can discover tools from a
 supported MCP server and persist normalized metadata.
 
-### Phase 3 - Audit Engine V1 ⏳ Not started
+### Phase 3 - Audit Engine V1 ✅ Complete
 
 **Goal:** Create the first deterministic audit engine.
 
@@ -359,7 +359,7 @@ This project audits potentially untrusted MCP servers. Therefore:
 | 0 | Project Foundation | ✅ Complete |
 | 1 | MCP Server Ingestion | ✅ Complete |
 | 2 | MCP Discovery | ✅ Complete |
-| 3 | Audit Engine V1 | ⏳ Not started |
+| 3 | Audit Engine V1 | ✅ Complete |
 | 4 | Risk Scoring Engine | ⏳ Not started |
 | 5 | Audit Execution Pipeline | ⏳ Not started |
 | 6 | Security Test Harness | ⏳ Not started |

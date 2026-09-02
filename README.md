@@ -6,10 +6,11 @@ other reliability/security concerns, producing a structured audit report
 with findings, evidence, severity, and an overall risk score.
 
 This repository is being built incrementally, phase by phase. **Phase 0
-(project foundation)**, **Phase 1 (MCP server ingestion)**, and **Phase 2
-(MCP discovery)** are complete: a runnable FastAPI backend with server
-registration and tool-discovery endpoints, a Next.js frontend, and
-PostgreSQL/Redis infrastructure via Docker Compose.
+(project foundation)**, **Phase 1 (MCP server ingestion)**, **Phase 2 (MCP
+discovery)**, and **Phase 3 (audit engine v1)** are complete: a runnable
+FastAPI backend with server registration, tool-discovery endpoints, and a
+deterministic auditing engine, a Next.js frontend, and PostgreSQL/Redis
+infrastructure via Docker Compose.
 
 ## Project Structure
 
@@ -157,6 +158,31 @@ normalized and persisted, replacing the server's previous tool snapshot.
 - `GET /servers/{id}/tools` - return the most recently discovered tools
   without making a live connection.
 
+### Audit Engine (Phase 3)
+
+`backend/app/auditors/` is a deterministic, internal analysis library (no
+new API endpoints yet - triggering/persisting full audits is Phase 5). Each
+auditor accepts a `ToolProfile` and returns a list of `AuditFinding`s
+(`category`, `severity`, `title`, `description`, `evidence`,
+`recommendation`). Given the same tool, results are always identical (pure
+keyword heuristics, no ML/network calls), so audits are reproducible.
+
+- `DescriptionAuditor` - flags missing/too-brief descriptions and tool
+  names/annotations that suggest destructive behavior the description
+  doesn't disclose.
+- `SchemaAuditor` - flags malformed input schemas, ambiguous (untyped or
+  undocumented) parameters, and required parameters missing from
+  `properties`.
+- `CapabilityAuditor` - infers capability tags (`SHELL_EXECUTION`,
+  `NETWORK`, `DATABASE`, `DESTRUCTIVE_OPERATION`, etc.) from tool
+  name/description/schema; flags unrestricted command input, dangerous
+  capability combinations, and annotation-vs-behavior mismatches.
+- `SideEffectAuditor` - classifies each tool `NONE`/`LOW`/`MODERATE`/`HIGH`/
+  `CRITICAL` based on inferred capabilities.
+
+`app.auditors.registry.run_auditors(tool)` runs all four against a
+`ToolProfile` and returns the combined findings.
+
 ## Definition of Done (Phase 0)
 
 - [x] `GET /health` responds with app status/version/environment.
@@ -200,6 +226,21 @@ normalized and persisted, replacing the server's previous tool snapshot.
 - [x] Tests cover all three clients (real subprocess for stdio, mocked
       transport for HTTP, no I/O for manual) plus the end-to-end API flow,
       including timeout, crash, and unreachable-server failure paths.
+
+## Definition of Done (Phase 3)
+
+- [x] `BaseAuditor` interface (`backend/app/auditors/`); each auditor takes a
+      `ToolProfile` and returns `AuditFinding`s.
+- [x] `DescriptionAuditor`, `SchemaAuditor`, `CapabilityAuditor`, and
+      `SideEffectAuditor` implemented per the plan.
+- [x] Deterministic, keyword-based capability/side-effect inference (no
+      ML/network calls) - documented as best-effort signal, not ground truth.
+- [x] Findings match the plan's literal examples: destructive tool names
+      without disclosure (HIGH), unrestricted command input (CRITICAL),
+      shell+network combination (CRITICAL), send email (HIGH), create DB
+      record (MODERATE), delete cloud resources (CRITICAL).
+- [x] A known set of sample MCP tools produces identical findings across
+      repeated runs (determinism test).
 
 ## Roadmap
 
