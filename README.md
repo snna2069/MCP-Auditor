@@ -1,6 +1,6 @@
 <div align="center">
 
-```text
+<pre align="center">
 █   █  ████  ████      ███    █   █  ████  █████  █████   ███  ████
 ██ ██  █     █   █    █   █   █   █  █   █    █      █   █   █ █   █
 █ █ █  █     ████     █████   █   █  █   █    █      █   █   █ ████
@@ -11,7 +11,7 @@
 │                     MCP SERVER SECURITY SCANNER                      │
 │                      [VERSION 0.1.0] [ONLINE]                        │
 └──────────────────────────────────────────────────────────────────────┘
-```
+</pre>
 
 **A deterministic security workbench for Model Context Protocol servers.**
 
