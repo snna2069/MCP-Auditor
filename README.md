@@ -43,6 +43,67 @@ risk score.
       [ prompt injection ] [ exfiltration ] [ authority spoofing ]
 ```
 
+## Visual Preview
+
+The product is organized around a small, explainable audit loop:
+
+```mermaid
+flowchart LR
+      A[Register MCP server] --> B[Discover tools]
+      B --> C[Build tool profiles]
+      C --> D[Run deterministic auditors]
+      D --> E[Calculate risk score]
+      E --> F[Review findings and evidence]
+
+      D -.-> D1[Descriptions]
+      D -.-> D2[Schemas]
+      D -.-> D3[Capabilities]
+      D -.-> D4[Side effects]
+      D -.-> D5[Untrusted output]
+
+      classDef action fill:#102a43,stroke:#5bc0be,color:#ffffff;
+      classDef analysis fill:#f2b84b,stroke:#9b6b00,color:#1b1b1b;
+      class A,B,C,F action;
+      class D,E,D1,D2,D3,D4,D5 analysis;
+```
+
+The first dashboard view is intentionally compact: an operator can see system
+health, audit volume, risk at a glance, and the latest audit results before
+drilling into the Server Registry or a detailed report.
+
+```mermaid
+flowchart TB
+      subgraph Dashboard["MCP Server Auditor Dashboard"]
+            H["Dashboard\nAudit Model Context Protocol servers for safety, permission, and reliability risks."]
+
+            subgraph Stats["At-a-glance status"]
+                  S1["Registered servers\n12"]
+                  S2["Total audits\n38"]
+                  S3["High / critical risk\n4"]
+                  S4["Backend\nONLINE"]
+            end
+
+            Actions["Register a new server   |   View servers   |   View audit history"]
+
+            subgraph Recent["Recent audits"]
+                  R1["Audit 8f31a2c4    COMPLETED    HIGH"]
+                  R2["Audit 4bd91e07    COMPLETED    LOW"]
+                  R3["Audit a0e4c912    RUNNING      --"]
+            end
+      end
+
+      H --> Stats --> Actions --> Recent
+
+      classDef header fill:#102a43,stroke:#5bc0be,color:#ffffff;
+      classDef stat fill:#f7f3ea,stroke:#c7bda8,color:#1b1b1b;
+      classDef action fill:#5bc0be,stroke:#246b6a,color:#0b2020;
+      classDef report fill:#ffffff,stroke:#b8c2cc,color:#1b1b1b;
+      class H header;
+      class S1,S2,S3,S4 stat;
+      class Actions action;
+      class R1,R2,R3 report;
+```
+
 ## Quick Links
 
 - [Getting Started](#prerequisites)
