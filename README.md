@@ -1,17 +1,55 @@
-# MCP Server Auditor
+<div align="center">
 
-Audits Model Context Protocol (MCP) servers for safety risks, misleading tool
-descriptions, prompt injection vulnerabilities, excessive privilege, and
-other reliability/security concerns, producing a structured audit report
-with findings, evidence, severity, and an overall risk score.
+```text
+█   █  ████  ████      ███    █   █  ████  █████  █████   ███  ████
+██ ██  █     █   █    █   █   █   █  █   █    █      █   █   █ █   █
+█ █ █  █     ████     █████   █   █  █   █    █      █   █   █ ████
+█   █  █     █        █   █   █   █  █   █    █      █   █   █ █  █
+█   █  ████  █        █   █    ███   ████   █████    █    ███  █   █
 
-This repository is being built incrementally, phase by phase. **Phase 0
-(project foundation)**, **Phase 1 (MCP server ingestion)**, **Phase 2 (MCP
-discovery)**, **Phase 3 (audit engine v1)**, **Phase 4 (risk scoring
-engine)**, **Phase 5 (audit execution pipeline)**, and **Phase 6 (security
-test harness)** are complete: a runnable FastAPI backend with server
-registration, tool-discovery, and asynchronous full-audit endpoints, a
-Next.js frontend, and PostgreSQL/Redis infrastructure via Docker Compose.
+┌──────────────────────────────────────────────────────────────────────┐
+│                     MCP SERVER SECURITY SCANNER                      │
+│                      [VERSION 0.1.0] [ONLINE]                        │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+**A deterministic security workbench for Model Context Protocol servers.**
+
+[![Status: Active Development](https://img.shields.io/badge/status-active%20development-f2b84b?style=flat-square)](./PROJECT_PLAN.md)
+[![Backend: FastAPI](https://img.shields.io/badge/backend-FastAPI-43b581?style=flat-square)](./backend/)
+[![Frontend: Next.js](https://img.shields.io/badge/frontend-Next.js-111111?style=flat-square)](./frontend/)
+[![License: TBD](https://img.shields.io/badge/license-TBD-d95f59?style=flat-square)](#roadmap)
+
+</div>
+
+MCP Server Auditor inspects tool definitions and untrusted tool output for
+misleading descriptions, prompt injection, excessive privilege, dangerous
+capabilities, schema problems, and unexpected side effects. It produces a
+structured report with evidence, severity, recommendations, and an explainable
+risk score.
+
+> **Build status:** Phases 0-6 are complete. The project includes a runnable
+> FastAPI backend, Next.js dashboard, asynchronous audit pipeline, and
+> PostgreSQL/Redis infrastructure via Docker Compose.
+
+## Signal Map
+
+```text
+      MCP SERVER  ──discover──>  TOOL PROFILES  ──audit──>  FINDINGS
+                   │                          │                         │
+                   └────────────── score <────┴──────── explain ────────┘
+
+      [ descriptions ] [ schemas ] [ capabilities ] [ side effects ]
+      [ prompt injection ] [ exfiltration ] [ authority spoofing ]
+```
+
+## Quick Links
+
+- [Getting Started](#prerequisites)
+- [Run the backend](#3-start-the-backend-fastapi)
+- [Run the frontend](#4-start-the-frontend-nextjs)
+- [API Endpoints](#api-endpoints)
+- [Roadmap](#roadmap)
 
 ## Project Structure
 
