@@ -128,3 +128,92 @@
     @apply font-sans;
   }
 }
+
+@layer components {
+  .app-main {
+    --pointer-x: 50%;
+    --pointer-y: 35%;
+    --pointer-dx: 0px;
+    --pointer-dy: 0px;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  .app-atmosphere {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .app-atmosphere::before {
+    position: absolute;
+    top: -13rem;
+    left: calc(var(--pointer-x) - 20rem);
+    width: 40rem;
+    height: 30rem;
+    border-radius: 50%;
+    background: oklch(0.91 0.08 83 / 0.3);
+    content: "";
+    filter: blur(2px);
+    transition: left 700ms ease-out;
+  }
+
+  .app-atmosphere::after {
+    position: absolute;
+    right: -7rem;
+    bottom: 8%;
+    width: 22rem;
+    height: 22rem;
+    border: 1px solid oklch(0.72 0.1 190 / 0.18);
+    border-radius: 50%;
+    box-shadow: 0 0 0 1.5rem oklch(0.72 0.1 190 / 0.05);
+    content: "";
+    transform: translate(var(--pointer-dx), var(--pointer-dy));
+    transition: transform 700ms ease-out;
+  }
+
+  .app-atmosphere-grid {
+    position: absolute;
+    inset: 0;
+    opacity: 0.36;
+    background-image: linear-gradient(oklch(0.5 0 0 / 0.055) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(0.5 0 0 / 0.055) 1px, transparent 1px);
+    background-size: 28px 28px;
+    mask-image: linear-gradient(to bottom, black, transparent 72%);
+  }
+
+  .app-doodle {
+    position: absolute;
+    width: 10rem;
+    height: auto;
+    stroke: oklch(0.46 0.09 190 / 0.34);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.5;
+  }
+
+  .app-doodle-top {
+    top: 1rem;
+    right: 4%;
+    transform: rotate(5deg);
+  }
+
+  .app-doodle-bottom {
+    bottom: 0;
+    left: -1rem;
+    stroke: oklch(0.52 0.1 35 / 0.28);
+    transform: rotate(-4deg);
+  }
+
+  @media (max-width: 640px) {
+    .app-doodle-top {
+      top: 2rem;
+      right: -2rem;
+      opacity: 0.7;
+      transform: scale(0.75) rotate(5deg);
+    }
+  }
+}

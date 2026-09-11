@@ -105,6 +105,38 @@ flowchart TB
       class R1,R2,R3 report;
 ```
 
+### UI Screenshots
+
+These screenshots were captured from the running Next.js application. The
+shared shell carries the same subtle grid, doodles, and pointer-responsive
+color accents across each route.
+
+<p align="center"><em>Dashboard</em></p>
+<p align="center">
+      <img src="./frontend/public/readme/dashboard.png" alt="MCP Auditor dashboard" width="100%" />
+</p>
+
+<p align="center"><em>Server Registry</em></p>
+<p align="center">
+      <img src="./frontend/public/readme/server-registry.png" alt="MCP Auditor server registry" width="100%" />
+</p>
+
+<p align="center"><em>Register a server</em></p>
+<p align="center">
+      <img src="./frontend/public/readme/new-server.png" alt="MCP Auditor new server form" width="100%" />
+</p>
+
+<p align="center"><em>Audit History</em></p>
+<p align="center">
+      <img src="./frontend/public/readme/audit-history.png" alt="MCP Auditor audit history" width="100%" />
+</p>
+
+<p align="center">
+                  <img src="./frontend/public/readme/audit-detail.png" alt="MCP Auditor audit detail report" width="100%" />
+</p>
+
+<p align="center"><em>Audit detail report with score, category breakdown, and findings.</em></p>
+
 ## Quick Links
 
 - [Getting Started](#prerequisites)

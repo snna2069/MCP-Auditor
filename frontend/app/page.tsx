@@ -49,16 +49,20 @@ export default function DashboardPage() {
   ).length;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
+    <div className="dashboard-page relative isolate flex flex-col gap-6">
+      <div className="relative">
+        <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300">
+          <span className="size-2 rounded-full bg-amber-400" />
+          Control room
+        </div>
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="mt-1 text-muted-foreground">
+        <p className="mt-1 max-w-xl text-muted-foreground">
           Audit Model Context Protocol servers for safety, permission, and
           reliability risks.
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="relative grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard
           label="Registered servers"
           value={servers.data?.length ?? 0}
@@ -88,7 +92,7 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="relative flex flex-wrap gap-2">
         <Button nativeButton={false} render={<Link href="/servers/new" />}>
           Register a new server
         </Button>
@@ -108,7 +112,7 @@ export default function DashboardPage() {
         </Button>
       </div>
 
-      <Card>
+      <Card className="relative">
         <CardHeader>
           <CardTitle>Recent audits</CardTitle>
           <CardDescription>The five most recently created audits.</CardDescription>

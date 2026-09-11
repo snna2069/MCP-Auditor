@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import type { PointerEvent, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -63,6 +63,41 @@ function useActiveHref(pathname: string): string {
   return bestMatch;
 }
 
+function AppAtmosphere() {
+  return (
+    <div aria-hidden="true" className="app-atmosphere">
+      <div className="app-atmosphere-grid" />
+      <svg className="app-doodle app-doodle-top" viewBox="0 0 170 130" fill="none">
+        <path d="M18 86c18-26 33-35 52-27 18 8 26 29 43 27 14-2 24-15 39-42" />
+        <path d="M117 31l35 13-14 31" />
+        <circle cx="31" cy="38" r="9" />
+      </svg>
+      <svg className="app-doodle app-doodle-bottom" viewBox="0 0 180 130" fill="none">
+        <path d="M12 99c21-25 38-31 56-18 17 12 30 11 43-7 10-14 24-20 57-15" />
+        <path d="M44 36c9-10 20-10 29 0-9 10-20 10-29 0Z" />
+        <path d="M128 72l10 10m0-10-10 10" />
+      </svg>
+    </div>
+  );
+}
+
+function handleAtmosphereMove(event: PointerEvent<HTMLElement>) {
+  const bounds = event.currentTarget.getBoundingClientRect();
+  const x = ((event.clientX - bounds.left) / bounds.width) * 100;
+  const y = ((event.clientY - bounds.top) / bounds.height) * 100;
+  event.currentTarget.style.setProperty("--pointer-x", `${x}%`);
+  event.currentTarget.style.setProperty("--pointer-y", `${y}%`);
+  event.currentTarget.style.setProperty("--pointer-dx", `${(x - 50) * -0.04}px`);
+  event.currentTarget.style.setProperty("--pointer-dy", `${(y - 50) * -0.04}px`);
+}
+
+function resetAtmosphere(event: PointerEvent<HTMLElement>) {
+  event.currentTarget.style.setProperty("--pointer-x", "50%");
+  event.currentTarget.style.setProperty("--pointer-y", "35%");
+  event.currentTarget.style.setProperty("--pointer-dx", "0px");
+  event.currentTarget.style.setProperty("--pointer-dy", "0px");
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const activeHref = useActiveHref(pathname);
@@ -96,7 +131,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
 
-        <main className="flex-1 bg-zinc-50 px-4 py-6 sm:px-8 sm:py-8 dark:bg-black">
+        <main
+          className="app-main flex-1 bg-zinc-50 px-4 py-6 sm:px-8 sm:py-8 dark:bg-black"
+          onPointerMove={handleAtmosphereMove}
+          onPointerLeave={resetAtmosphere}
+        >
+          <AppAtmosphere />
           <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
             {children}
           </div>
