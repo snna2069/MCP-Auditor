@@ -1,7 +1,9 @@
 "use client";
 
 import {
+  BotIcon,
   ClipboardListIcon,
+  NetworkIcon,
   LayoutDashboardIcon,
   PlusIcon,
   ServerIcon,
@@ -35,10 +37,10 @@ function NavLink({
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+        "group/nav flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
         isActive
-          ? "bg-primary text-primary-foreground"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+          ? "bg-primary text-primary-foreground shadow-[0_8px_24px_-12px_oklch(0.32_0.12_250_/_0.85)]"
+          : "text-muted-foreground hover:translate-x-0.5 hover:bg-muted hover:text-foreground",
       )}
     >
       <Icon className="size-4 shrink-0" />
@@ -77,6 +79,15 @@ function AppAtmosphere() {
         <path d="M44 36c9-10 20-10 29 0-9 10-20 10-29 0Z" />
         <path d="M128 72l10 10m0-10-10 10" />
       </svg>
+      <svg className="app-network" viewBox="0 0 330 210" fill="none">
+        <path d="M45 146 128 61l78 73 76-86" />
+        <path d="m128 61 78 73m0 0 60 22" />
+        <circle cx="45" cy="146" r="8" />
+        <circle cx="128" cy="61" r="10" />
+        <circle cx="206" cy="134" r="8" />
+        <circle cx="282" cy="48" r="10" />
+        <circle cx="266" cy="156" r="6" />
+      </svg>
     </div>
   );
 }
@@ -104,14 +115,25 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-full flex-1">
-      <aside className="hidden w-60 shrink-0 flex-col gap-6 border-r bg-card px-4 py-6 sm:flex">
-        <Link href="/" className="flex items-center gap-2 px-2">
-          <ShieldIcon className="size-6 text-primary" />
-          <span className="font-heading text-lg font-semibold">
-            MCP Auditor
+      <aside className="relative hidden w-64 shrink-0 flex-col gap-7 overflow-hidden border-r bg-card/90 px-4 py-6 backdrop-blur sm:flex">
+        <div aria-hidden="true" className="sidebar-glow" />
+        <Link href="/" className="relative flex items-center gap-2.5 px-2">
+          <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
+            <ShieldIcon className="size-5" />
+          </span>
+          <span>
+            <span className="font-heading block text-lg font-semibold tracking-tight">
+              MCP Auditor
+            </span>
+            <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              <BotIcon className="size-3" /> AI security
+            </span>
           </span>
         </Link>
-        <nav className="flex flex-col gap-1">
+        <div className="relative flex items-center gap-2 px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          <NetworkIcon className="size-3" /> Workspace
+        </div>
+        <nav className="relative flex flex-col gap-1">
           {NAV_ITEMS.map((item) => (
             <NavLink key={item.href} {...item} isActive={item.href === activeHref} />
           ))}
@@ -119,7 +141,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex flex-1 flex-col">
-        <header className="flex items-center justify-between border-b bg-card px-4 py-3 sm:hidden">
+        <header className="flex items-center justify-between border-b bg-card/90 px-4 py-3 backdrop-blur sm:hidden">
           <Link href="/" className="flex items-center gap-2">
             <ShieldIcon className="size-5 text-primary" />
             <span className="font-heading font-semibold">MCP Auditor</span>
@@ -132,7 +154,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </nav>
 
         <main
-          className="app-main flex-1 bg-zinc-50 px-4 py-6 sm:px-8 sm:py-8 dark:bg-black"
+          className="app-main flex-1 px-4 py-6 sm:px-8 sm:py-8"
           onPointerMove={handleAtmosphereMove}
           onPointerLeave={resetAtmosphere}
         >
