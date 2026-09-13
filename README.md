@@ -85,32 +85,26 @@ R --> R3[Running audit]
 Explore the main operator workflows. Scroll horizontally, or select a screen
 to open the full-resolution view.
 
-<div style="display: flex; gap: 16px; overflow-x: auto; padding: 8px 0 20px;">
-      <div style="flex: 0 0 440px;">
-            <a href="frontend/public/assets/dashboard.png">
-                  <img src="frontend/public/assets/dashboard.png" alt="MCP Auditor dashboard" width="440" height="190" style="display: block; border: 1px solid #d8e0ea; border-radius: 12px; object-fit: contain;" />
-            </a>
-            <p align="center"><strong>Dashboard</strong><br /><sub>System health, audit volume, and risk at a glance.</sub></p>
-      </div>
-      <div style="flex: 0 0 440px;">
-            <a href="frontend/public/assets/server_registry.png">
-                  <img src="frontend/public/assets/server_registry.png" alt="MCP server registry" width="440" height="190" style="display: block; border: 1px solid #d8e0ea; border-radius: 12px; object-fit: contain;" />
-            </a>
-            <p align="center"><strong>Server Registry</strong><br /><sub>Manage MCP servers available for auditing.</sub></p>
-      </div>
-      <div style="flex: 0 0 440px;">
-            <a href="frontend/public/assets/new_server.png">
-                  <img src="frontend/public/assets/new_server.png" alt="Register a new MCP server" width="440" height="190" style="display: block; border: 1px solid #d8e0ea; border-radius: 12px; object-fit: contain;" />
-            </a>
-            <p align="center"><strong>Register a Server</strong><br /><sub>Configure an HTTP, local, or manual MCP source.</sub></p>
-      </div>
-      <div style="flex: 0 0 440px;">
-            <a href="frontend/public/assets/audit_history.png">
-                  <img src="frontend/public/assets/audit_history.png" alt="MCP audit history" width="440" height="190" style="display: block; border: 1px solid #d8e0ea; border-radius: 12px; object-fit: contain;" />
-            </a>
-            <p align="center"><strong>Audit History</strong><br /><sub>Review completed scans, findings, and risk levels.</sub></p>
-      </div>
-</div>
+<table>
+  <tr>
+    <td align="center" valign="top">
+      <a href="frontend/public/assets/dashboard.png"><img src="frontend/public/assets/dashboard.png" alt="MCP Auditor dashboard" width="440" height="190" /></a><br />
+      <strong>Dashboard</strong><br /><sub>System health, audit volume, and risk at a glance.</sub>
+    </td>
+    <td align="center" valign="top">
+      <a href="frontend/public/assets/server_registry.png"><img src="frontend/public/assets/server_registry.png" alt="MCP server registry" width="440" height="190" /></a><br />
+      <strong>Server Registry</strong><br /><sub>Manage MCP servers available for auditing.</sub>
+    </td>
+    <td align="center" valign="top">
+      <a href="frontend/public/assets/new_server.png"><img src="frontend/public/assets/new_server.png" alt="Register a new MCP server" width="440" height="190" /></a><br />
+      <strong>Register a Server</strong><br /><sub>Configure an HTTP, local, or manual MCP source.</sub>
+    </td>
+    <td align="center" valign="top">
+      <a href="frontend/public/assets/audit_history.png"><img src="frontend/public/assets/audit_history.png" alt="MCP audit history" width="440" height="190" /></a><br />
+      <strong>Audit History</strong><br /><sub>Review completed scans, findings, and risk levels.</sub>
+    </td>
+  </tr>
+</table>
 
 ## Quick Links
 
