@@ -65,20 +65,23 @@ function useActiveHref(pathname: string): string {
   return bestMatch;
 }
 
-function AppAtmosphere() {
+function AppAtmosphere({ showCartoon = true }: { showCartoon?: boolean }) {
   return (
     <div aria-hidden="true" className="app-atmosphere">
       <div className="app-atmosphere-grid" />
-      <svg className="app-doodle app-doodle-top" viewBox="0 0 170 130" fill="none">
-        <path d="M18 86c18-26 33-35 52-27 18 8 26 29 43 27 14-2 24-15 39-42" />
-        <path d="M117 31l35 13-14 31" />
-        <circle cx="31" cy="38" r="9" />
-      </svg>
-      <svg className="app-doodle app-doodle-bottom" viewBox="0 0 180 130" fill="none">
-        <path d="M12 99c21-25 38-31 56-18 17 12 30 11 43-7 10-14 24-20 57-15" />
-        <path d="M44 36c9-10 20-10 29 0-9 10-20 10-29 0Z" />
-        <path d="M128 72l10 10m0-10-10 10" />
-      </svg>
+      {showCartoon && (
+        <svg className="app-cartoon app-cartoon-top" viewBox="0 0 190 150" fill="none">
+          <path className="app-cartoon-line" d="M95 29V17m0 0-7 7m7-7 7 7" />
+          <rect className="app-cartoon-body" x="46" y="30" width="98" height="83" rx="24" />
+          <path className="app-cartoon-screen" d="M67 52h56v28H67z" />
+          <circle className="app-cartoon-accent" cx="82" cy="66" r="5" />
+          <circle className="app-cartoon-accent" cx="108" cy="66" r="5" />
+          <path className="app-cartoon-line" d="M82 94h26m-42 19v16m56-16v16M46 67H31m113 0h15" />
+          <circle className="app-cartoon-node" cx="22" cy="67" r="8" />
+          <circle className="app-cartoon-node" cx="168" cy="67" r="8" />
+          <path className="app-cartoon-line" d="m30 67 16 0m114 0h-16" />
+        </svg>
+      )}
       <svg className="app-network" viewBox="0 0 330 210" fill="none">
         <path d="M45 146 128 61l78 73 76-86" />
         <path d="m128 61 78 73m0 0 60 22" />
@@ -158,7 +161,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           onPointerMove={handleAtmosphereMove}
           onPointerLeave={resetAtmosphere}
         >
-          <AppAtmosphere />
+          <AppAtmosphere showCartoon={pathname !== "/servers"} />
           <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
             {children}
           </div>

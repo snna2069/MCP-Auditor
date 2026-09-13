@@ -80,6 +80,15 @@ R --> R2[Completed low risk audit]
 R --> R3[Running audit]
 ```
 
+### Visuals
+
+<div style="overflow-x: auto; padding: 8px 0 16px; white-space: nowrap;">
+      <img src="frontend/public/assets/dashboard.png" alt="MCP Auditor dashboard" width="760" height="330" style="display: inline-block; margin-right: 16px; object-fit: contain; vertical-align: top;" />
+      <img src="frontend/public/assets/server_registry.png" alt="MCP server registry" width="760" height="330" style="display: inline-block; margin-right: 16px; object-fit: contain; vertical-align: top;" />
+      <img src="frontend/public/assets/new_server.png" alt="Register a new MCP server" width="760" height="330" style="display: inline-block; margin-right: 16px; object-fit: contain; vertical-align: top;" />
+      <img src="frontend/public/assets/audit_history.png" alt="MCP audit history" width="760" height="330" style="display: inline-block; object-fit: contain; vertical-align: top;" />
+</div>
+
 ## Quick Links
 
 - [Getting Started](#prerequisites)

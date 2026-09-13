@@ -189,27 +189,45 @@
     mask-image: linear-gradient(to bottom, black, transparent 72%);
   }
 
-  .app-doodle {
+  .app-cartoon {
     position: absolute;
-    width: 10rem;
+    width: 11rem;
     height: auto;
-    stroke: oklch(0.46 0.09 190 / 0.34);
     stroke-linecap: round;
     stroke-linejoin: round;
-    stroke-width: 1.5;
   }
 
-  .app-doodle-top {
+  .app-cartoon-line {
+    stroke: oklch(0.37 0.08 235 / 0.6);
+    stroke-width: 2.5;
+  }
+
+  .app-cartoon-body {
+    fill: oklch(0.96 0.035 190 / 0.78);
+    stroke: oklch(0.37 0.08 235 / 0.6);
+    stroke-width: 2.5;
+  }
+
+  .app-cartoon-screen {
+    fill: oklch(0.38 0.1 235 / 0.85);
+    stroke: oklch(0.37 0.08 235 / 0.6);
+    stroke-width: 2;
+  }
+
+  .app-cartoon-accent {
+    fill: oklch(0.8 0.16 75);
+  }
+
+  .app-cartoon-node {
+    fill: oklch(0.72 0.15 165 / 0.8);
+    stroke: oklch(0.37 0.08 235 / 0.6);
+    stroke-width: 2;
+  }
+
+  .app-cartoon-top {
     top: 1rem;
     right: 4%;
-    transform: rotate(5deg);
-  }
-
-  .app-doodle-bottom {
-    bottom: 0;
-    left: -1rem;
-    stroke: oklch(0.52 0.1 35 / 0.28);
-    transform: rotate(-4deg);
+    transform: rotate(4deg);
   }
 
   .app-network {
@@ -261,11 +279,11 @@
   }
 
   @media (max-width: 640px) {
-    .app-doodle-top {
+    .app-cartoon-top {
       top: 2rem;
       right: -2rem;
       opacity: 0.7;
-      transform: scale(0.75) rotate(5deg);
+      transform: scale(0.75) rotate(4deg);
     }
   }
 }

@@ -135,7 +135,7 @@ export function NewServerForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex max-w-lg flex-col gap-5">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex w-full flex-col gap-5">
       <div className="flex flex-col gap-1.5">
         <label htmlFor="name" className="text-sm font-medium">
           Name

@@ -35,10 +35,12 @@ function StatCard({
   isLoading?: boolean;
 }) {
   return (
-    <Card size="sm">
-      <CardHeader>
-        <CardDescription>{label}</CardDescription>
-        <CardTitle className="text-2xl">
+    <Card className="border-primary/10 bg-card/75" size="sm">
+      <CardHeader className="items-center gap-2 py-5 text-center">
+        <CardDescription className="text-center text-sm font-semibold text-foreground">
+          {label}
+        </CardDescription>
+        <CardTitle className="text-center text-3xl font-semibold tracking-tight text-primary">
           {isLoading ? "-" : value}
         </CardTitle>
       </CardHeader>
@@ -59,7 +61,7 @@ export default function DashboardPage() {
   return (
     <div className="dashboard-page relative isolate flex flex-col gap-6">
       <section className="relative overflow-hidden rounded-2xl border border-primary/15 bg-card/80 px-5 py-6 shadow-[0_20px_45px_-32px_oklch(0.3_0.12_250_/_0.55)] sm:px-7 sm:py-8">
-        <div className="absolute -right-4 -top-8 opacity-90 sm:right-6">
+        <div className="absolute -right-4 -top-8 opacity-90 sm:right-40">
           <svg className="size-40 text-primary/15 sm:size-48" viewBox="0 0 200 200" fill="none">
             <circle cx="100" cy="100" r="74" stroke="currentColor" strokeWidth="1.5" />
             <circle cx="100" cy="100" r="48" stroke="currentColor" strokeWidth="1" strokeDasharray="5 7" />
@@ -91,10 +93,12 @@ export default function DashboardPage() {
           <RevealItem><StatCard label="Total audits" value={audits.data?.length ?? 0} isLoading={audits.isLoading} /></RevealItem>
           <RevealItem><StatCard label="High/critical risk" value={highRiskCount} isLoading={audits.isLoading} /></RevealItem>
           <RevealItem>
-            <Card size="sm">
-              <CardHeader>
-                <CardDescription>Backend</CardDescription>
-                <CardTitle className="text-2xl">
+            <Card className="border-primary/10 bg-card/75" size="sm">
+              <CardHeader className="items-center gap-2 py-5 text-center">
+                <CardDescription className="text-sm font-semibold text-foreground">
+                  Backend
+                </CardDescription>
+                <CardTitle className="text-2xl font-medium tracking-tight text-primary">
                   {health.isLoading && "-"}
                   {health.isError && <Badge variant="destructive">Unreachable</Badge>}
                   {health.data && <Badge variant="secondary">Online</Badge>}
