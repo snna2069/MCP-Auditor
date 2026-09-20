@@ -263,7 +263,7 @@ suspicious tool-output scenarios and generate findings.
 - Requirements: responsive layout, loading/error/empty states, strong
   visual hierarchy, don't over-engineer animations.
 
-### Phase 8 - Reporting 🚧 In progress
+### Phase 8 - Reporting ✅ Complete
 
 **Goal:** Generate shareable audit reports.
 
@@ -319,10 +319,14 @@ GET    /servers
 GET    /servers/{id}
 DELETE /servers/{id}
 POST   /servers/{id}/discover
+GET    /servers/{id}/tools
 POST   /servers/{id}/audits
 GET    /audits
 GET    /audits/{id}
 GET    /audits/{id}/findings
+GET    /audits/{id}/report
+GET    /audits/{id}/report/html
+GET    /audits/{id}/report/pdf
 ```
 
 Avoid exposing database models directly through the API - use dedicated
@@ -370,8 +374,8 @@ This project audits potentially untrusted MCP servers. Therefore:
 | 4 | Risk Scoring Engine | ✅ Complete |
 | 5 | Audit Execution Pipeline | ✅ Complete |
 | 6 | Security Test Harness | ✅ Complete |
-| 7 | Frontend Audit Dashboard | 🚧 WIP |
-| 8 | Reporting | ⏳ Not started |
+| 7 | Frontend Audit Dashboard | ✅ Complete |
+| 8 | Reporting | ✅ Complete |
 | 9 | Hardening and Production Readiness | ⏳ Not started |
 
 See [README.md](./README.md) for setup/run instructions and current API
