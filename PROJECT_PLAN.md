@@ -263,7 +263,7 @@ suspicious tool-output scenarios and generate findings.
 - Requirements: responsive layout, loading/error/empty states, strong
   visual hierarchy, don't over-engineer animations.
 
-### Phase 8 - Reporting ⏳ Not started
+### Phase 8 - Reporting 🚧 In progress
 
 **Goal:** Generate shareable audit reports.
 
@@ -272,6 +272,12 @@ suspicious tool-output scenarios and generate findings.
   score, risk classification, findings, evidence, recommendations,
   timestamp.
 - Reports must be reproducible.
+
+**Implemented first:** `GET /audits/{id}/report` returns a stable JSON report
+for completed audits. It is built from persisted audit/server/finding data,
+does not rerun the audit pipeline, and excludes connection configuration and
+other sensitive server details. HTML and PDF reporting remain out of scope
+for this increment.
 
 ### Phase 9 - Hardening and Production Readiness ⏳ Not started
 

@@ -9,6 +9,7 @@ from fastapi import APIRouter
 from app.api.audits import router as audits_router
 from app.api.discovery import router as discovery_router
 from app.api.health import router as health_router
+from app.api.reports import router as reports_router
 from app.api.servers import router as servers_router
 
 api_router = APIRouter()
@@ -16,3 +17,4 @@ api_router.include_router(health_router, tags=["health"])
 api_router.include_router(servers_router)
 api_router.include_router(discovery_router)
 api_router.include_router(audits_router)
+api_router.include_router(reports_router)

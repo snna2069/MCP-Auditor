@@ -32,3 +32,11 @@ class AuditNotFoundError(DomainError):
     def __init__(self, audit_id: object) -> None:
         self.audit_id = audit_id
         super().__init__(f"Audit '{audit_id}' not found.")
+
+
+class AuditIncompleteError(DomainError):
+    """Raised when a report is requested for an audit without final results."""
+
+    def __init__(self, audit_id: object) -> None:
+        self.audit_id = audit_id
+        super().__init__(f"Audit '{audit_id}' is not complete.")

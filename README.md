@@ -344,6 +344,8 @@ sanitized `error_message`, never a raw stack trace or secret).
 - `GET /audits` - list audits (`skip`/`limit`, optional `server_id` filter).
 - `GET /audits/{id}` - poll a single audit's status/score/risk_level.
 - `GET /audits/{id}/findings` - list the findings persisted for an audit.
+- `GET /audits/{id}/report` - return a stable JSON report for a completed
+      audit; returns 409 while the audit is incomplete.
 
 Audit lifecycle: `PENDING` -> `RUNNING` -> `COMPLETED` / `FAILED`. The
 pipeline never lets an exception escape the worker task - failures are
@@ -371,6 +373,21 @@ invocation step could feed it real tool-call output).
   live pipeline later.
 
 Tests prove every malicious fixture is detected and every benign one is not.
+
+### JSON Audit Reporting (Phase 8)
+
+Completed audits can be exported as a stable JSON report assembled from the
+persisted audit, server metadata, and finding rows. Report generation does not
+run discovery or the audit pipeline again. It includes the audit and report
+metadata, score and risk classification, category and severity breakdowns,
+findings, evidence, and recommendations.
+
+- `GET /audits/{id}/report` - return the completed audit report as JSON.
+      Returns 404 when the audit does not exist and 409 while it is incomplete.
+
+Reports intentionally include only safe server metadata (`id`, `name`, source
+type, and discovery timestamps/status). They never include connection
+configuration, credentials, access tokens, or discovery error details.
 
 ## Definition of Done (Phase 0)
 
