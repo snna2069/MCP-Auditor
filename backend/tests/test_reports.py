@@ -152,3 +152,119 @@ def test_report_does_not_expose_sensitive_server_configuration(
     assert "super-secret-token" not in report_text
     assert "Authorization" not in report_text
     assert "connection_config" not in report_text
+
+
+def test_html_report_generation_has_correct_content_type_and_sections(
+    client: TestClient, db_session: Session
+) -> None:
+    server = _create_server(db_session)
+    audit = _create_audit(db_session, server)
+
+    response = client.get(f"/audits/{audit.id}/report/html")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "text/html; charset=utf-8"
+    assert "MCP audit report" in response.text
+    assert "Server and audit" in response.text
+    assert "Risk summary" in response.text
+    assert "Category breakdown" in response.text
+    assert "Severity breakdown" in response.text
+    assert "Findings" in response.text
+    assert "No findings." in response.text
+
+
+def test_html_report_for_missing_audit_returns_404(client: TestClient) -> None:
+    response = client.get(f"/audits/{uuid.uuid4()}/report/html")
+
+    assert response.status_code == 404
+
+
+def test_html_report_escapes_untrusted_finding_content(
+    client: TestClient, db_session: Session
+) -> None:
+    server = _create_server(db_session)
+    audit = _create_audit(
+        db_session,
+        server,
+        findings=[
+            {
+                "category": AuditCategory.TOOL_DEFINITION_QUALITY,
+                "severity": Severity.HIGH,
+                "title": '<script>alert("xss")</script>',
+                "description": "Description with <b>markup</b> & characters",
+                "evidence": {"payload": '<img src=x onerror="alert(1)">'},
+                "recommendation": "Use a <safe> description",
+                "tool_name": "tool<&",
+            }
+        ],
+    )
+
+    response = client.get(f"/audits/{audit.id}/report/html")
+
+    assert response.status_code == 200
+    assert '<script>alert("xss")</script>' not in response.text
+    assert "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;" in response.text
+    assert "&lt;img src=x onerror=\\&quot;alert(1)\\&quot;&gt;" in response.text
+    assert "<b>markup</b>" not in response.text
+
+
+def test_html_report_does_not_expose_sensitive_server_configuration(
+    client: TestClient, db_session: Session
+) -> None:
+    server_response = client.post(
+        "/servers",
+        json={
+            "name": "secret-html-report-server",
+            "source_type": "HTTP",
+            "connection_config": {
+                "url": "https://example.test/mcp",
+                "headers": {"Authorization": "Bearer html-secret-token"},
+            },
+        },
+    )
+    server = db_session.get(MCPServer, uuid.UUID(server_response.json()["id"]))
+    assert server is not None
+    audit = _create_audit(db_session, server)
+
+    report_text = client.get(f"/audits/{audit.id}/report/html").text
+
+    assert "html-secret-token" not in report_text
+    assert "Authorization" not in report_text
+    assert "connection_config" not in report_text
+
+
+def test_html_report_renders_multiple_findings(client: TestClient, db_session: Session) -> None:
+    server = _create_server(db_session)
+    audit = _create_audit(
+        db_session,
+        server,
+        findings=[
+            {
+                "category": AuditCategory.TOOL_DEFINITION_QUALITY,
+                "severity": Severity.HIGH,
+                "title": "High finding",
+                "description": "High description",
+                "evidence": {"source": "high"},
+                "recommendation": "Review high finding",
+                "tool_name": "dangerous_tool",
+            },
+            {
+                "category": AuditCategory.SIDE_EFFECT_ANALYSIS,
+                "severity": Severity.LOW,
+                "title": "Low finding",
+                "description": "Low description",
+                "evidence": {"source": "low"},
+                "recommendation": "Review low finding",
+                "tool_name": "mild_tool",
+            },
+        ],
+    )
+
+    report_text = client.get(f"/audits/{audit.id}/report/html").text
+
+    assert "High finding" in report_text
+    assert "Low finding" in report_text
+    assert "Review high finding" in report_text
+    assert "Review low finding" in report_text
+    assert "&quot;source&quot;: &quot;high&quot;" in report_text
+    assert "&quot;source&quot;: &quot;low&quot;" in report_text

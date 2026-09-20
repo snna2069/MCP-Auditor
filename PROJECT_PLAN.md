@@ -273,11 +273,12 @@ suspicious tool-output scenarios and generate findings.
   timestamp.
 - Reports must be reproducible.
 
-**Implemented first:** `GET /audits/{id}/report` returns a stable JSON report
-for completed audits. It is built from persisted audit/server/finding data,
-does not rerun the audit pipeline, and excludes connection configuration and
-other sensitive server details. HTML and PDF reporting remain out of scope
-for this increment.
+**Implemented:** `GET /audits/{id}/report` returns a stable JSON report and
+`GET /audits/{id}/report/html` returns the same canonical data as an escaped,
+self-contained HTML document. Both are built from persisted
+audit/server/finding data, do not rerun the audit pipeline, and exclude
+connection configuration and other sensitive server details. PDF reporting
+remains out of scope.
 
 ### Phase 9 - Hardening and Production Readiness ⏳ Not started
 

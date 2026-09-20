@@ -346,6 +346,8 @@ sanitized `error_message`, never a raw stack trace or secret).
 - `GET /audits/{id}/findings` - list the findings persisted for an audit.
 - `GET /audits/{id}/report` - return a stable JSON report for a completed
       audit; returns 409 while the audit is incomplete.
+- `GET /audits/{id}/report/html` - return the same completed audit report as
+      a self-contained, escaped HTML document.
 
 Audit lifecycle: `PENDING` -> `RUNNING` -> `COMPLETED` / `FAILED`. The
 pipeline never lets an exception escape the worker task - failures are
@@ -376,11 +378,11 @@ Tests prove every malicious fixture is detected and every benign one is not.
 
 ### JSON Audit Reporting (Phase 8)
 
-Completed audits can be exported as a stable JSON report assembled from the
-persisted audit, server metadata, and finding rows. Report generation does not
-run discovery or the audit pipeline again. It includes the audit and report
-metadata, score and risk classification, category and severity breakdowns,
-findings, evidence, and recommendations.
+Completed audits can be exported as a stable JSON or HTML report assembled
+from the persisted audit, server metadata, and finding rows. Report
+generation does not run discovery or the audit pipeline again. Both formats
+include the audit and report metadata, score and risk classification,
+category and severity breakdowns, findings, evidence, and recommendations.
 
 - `GET /audits/{id}/report` - return the completed audit report as JSON.
       Returns 404 when the audit does not exist and 409 while it is incomplete.
