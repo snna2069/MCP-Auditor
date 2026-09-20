@@ -82,7 +82,7 @@ R --> R3[Running audit]
 
 ### Product Screens
 
-Explore the main operator workflows. Scroll horizontally, or select a screen
+Explore the main operator workflows. Select a screen
 to open the full-resolution view.
 
 <table>
