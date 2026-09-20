@@ -267,7 +267,7 @@ suspicious tool-output scenarios and generate findings.
 
 **Goal:** Generate shareable audit reports.
 
-- Support JSON and HTML (PDF potentially later).
+- Support JSON, HTML, and PDF.
 - A report includes: server metadata, audit metadata, audit version,
   score, risk classification, findings, evidence, recommendations,
   timestamp.
@@ -275,10 +275,10 @@ suspicious tool-output scenarios and generate findings.
 
 **Implemented:** `GET /audits/{id}/report` returns a stable JSON report and
 `GET /audits/{id}/report/html` returns the same canonical data as an escaped,
-self-contained HTML document. Both are built from persisted
+self-contained HTML document. `GET /audits/{id}/report/pdf` returns the same
+canonical data as a paginated PDF. All formats are built from persisted
 audit/server/finding data, do not rerun the audit pipeline, and exclude
-connection configuration and other sensitive server details. PDF reporting
-remains out of scope.
+connection configuration and other sensitive server details.
 
 ### Phase 9 - Hardening and Production Readiness ⏳ Not started
 

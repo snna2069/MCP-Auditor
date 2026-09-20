@@ -64,8 +64,9 @@ def render_audit_report_html(report: AuditReport) -> str:
         <dt>Server</dt><dd>{_text(report.server.name)}</dd>
         <dt>Server ID</dt><dd>{_text(report.server.id)}</dd>
         <dt>Source type</dt><dd>{_text(report.server.source_type)}</dd>
-        <dt>Discovery status</dt><dd>{_text(report.server.last_discovery_status or
-          "Not available")}</dd>
+        <dt>Discovery status</dt><dd>{
+        _text(report.server.last_discovery_status or "Not available")
+    }</dd>
         <dt>Audit ID</dt><dd>{_text(report.audit_id)}</dd>
         <dt>Audit version</dt><dd>{_text(report.audit_version)}</dd>
         <dt>Created</dt><dd>{_text(report.created_at)}</dd>

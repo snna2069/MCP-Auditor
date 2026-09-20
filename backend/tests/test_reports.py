@@ -268,3 +268,113 @@ def test_html_report_renders_multiple_findings(client: TestClient, db_session: S
     assert "Review low finding" in report_text
     assert "&quot;source&quot;: &quot;high&quot;" in report_text
     assert "&quot;source&quot;: &quot;low&quot;" in report_text
+
+
+def test_pdf_report_generation_returns_downloadable_pdf(
+    client: TestClient, db_session: Session
+) -> None:
+    server = _create_server(db_session)
+    audit = _create_audit(db_session, server)
+
+    response = client.get(f"/audits/{audit.id}/report/pdf")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "application/pdf"
+    assert response.headers["content-disposition"] == (
+        f'attachment; filename="audit-{audit.id}.pdf"'
+    )
+    assert response.content.startswith(b"%PDF-")
+    assert len(response.content) > 1_000
+
+
+def test_pdf_report_for_missing_audit_returns_404(client: TestClient) -> None:
+    response = client.get(f"/audits/{uuid.uuid4()}/report/pdf")
+
+    assert response.status_code == 404
+
+
+def test_pdf_report_with_empty_findings_is_valid(client: TestClient, db_session: Session) -> None:
+    server = _create_server(db_session)
+    audit = _create_audit(db_session, server)
+
+    response = client.get(f"/audits/{audit.id}/report/pdf")
+
+    assert response.status_code == 200
+    assert response.content.startswith(b"%PDF-")
+
+
+def test_pdf_report_handles_large_findings(client: TestClient, db_session: Session) -> None:
+    server = _create_server(db_session)
+    long_text = "Large finding content. " * 500
+    audit = _create_audit(
+        db_session,
+        server,
+        findings=[
+            {
+                "category": AuditCategory.TOOL_DEFINITION_QUALITY,
+                "severity": Severity.HIGH,
+                "title": f"Large finding {index}",
+                "description": long_text,
+                "evidence": {"payload": long_text},
+                "recommendation": long_text,
+                "tool_name": f"large_tool_{index}",
+            }
+            for index in range(12)
+        ],
+    )
+
+    response = client.get(f"/audits/{audit.id}/report/pdf")
+
+    assert response.status_code == 200
+    assert response.content.startswith(b"%PDF-")
+    assert len(response.content) > 10_000
+
+
+def test_pdf_report_handles_special_characters(client: TestClient, db_session: Session) -> None:
+    server = _create_server(db_session)
+    audit = _create_audit(
+        db_session,
+        server,
+        findings=[
+            {
+                "category": AuditCategory.PROMPT_INJECTION_RISK,
+                "severity": Severity.CRITICAL,
+                "title": '<script>alert("xss")</script> & finding',
+                "description": "Text with <tags>, ampersands, and quotes: ' \"",
+                "evidence": {"payload": '<img src=x onerror="alert(1)">'},
+                "recommendation": "Escape <all> untrusted content & keep it inert",
+                "tool_name": "tool<&",
+            }
+        ],
+    )
+
+    response = client.get(f"/audits/{audit.id}/report/pdf")
+
+    assert response.status_code == 200
+    assert response.content.startswith(b"%PDF-")
+    assert b"<script>alert" not in response.content
+
+
+def test_pdf_report_does_not_expose_sensitive_server_configuration(
+    client: TestClient, db_session: Session
+) -> None:
+    server_response = client.post(
+        "/servers",
+        json={
+            "name": "secret-pdf-report-server",
+            "source_type": "HTTP",
+            "connection_config": {
+                "url": "https://example.test/mcp",
+                "headers": {"Authorization": "Bearer pdf-secret-token"},
+            },
+        },
+    )
+    server = db_session.get(MCPServer, uuid.UUID(server_response.json()["id"]))
+    assert server is not None
+    audit = _create_audit(db_session, server)
+
+    response = client.get(f"/audits/{audit.id}/report/pdf")
+
+    assert response.status_code == 200
+    assert b"pdf-secret-token" not in response.content
+    assert b"connection_config" not in response.content

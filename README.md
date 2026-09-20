@@ -348,6 +348,8 @@ sanitized `error_message`, never a raw stack trace or secret).
       audit; returns 409 while the audit is incomplete.
 - `GET /audits/{id}/report/html` - return the same completed audit report as
       a self-contained, escaped HTML document.
+- `GET /audits/{id}/report/pdf` - download the same completed audit report as
+      a paginated PDF document.
 
 Audit lifecycle: `PENDING` -> `RUNNING` -> `COMPLETED` / `FAILED`. The
 pipeline never lets an exception escape the worker task - failures are
@@ -390,6 +392,9 @@ category and severity breakdowns, findings, evidence, and recommendations.
 Reports intentionally include only safe server metadata (`id`, `name`, source
 type, and discovery timestamps/status). They never include connection
 configuration, credentials, access tokens, or discovery error details.
+
+PDF reports use ReportLab for deterministic pagination and are returned with
+`Content-Type: application/pdf` and an attachment filename.
 
 ## Definition of Done (Phase 0)
 
