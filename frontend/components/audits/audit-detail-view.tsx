@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { AlertCircleIcon, ChevronLeftIcon } from "lucide-react";
+import { useState } from "react";
+import { isAxiosError } from "axios";
+import {
+  AlertCircleIcon,
+  ChevronLeftIcon,
+  DownloadIcon,
+  ExternalLinkIcon,
+} from "lucide-react";
 
 import { CategoryBreakdown, SeverityBreakdown } from "@/components/audits/breakdowns";
 import { FindingsTable } from "@/components/audits/findings-table";
@@ -9,6 +16,7 @@ import { ScoreSummary } from "@/components/audits/score-summary";
 import { AuditStatusBadge } from "@/components/shared/badges";
 import { ErrorState, InlineSpinner, LoadingState } from "@/components/shared/state-views";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -18,11 +26,38 @@ import {
 } from "@/components/ui/card";
 import { useAudit } from "@/hooks/use-audits";
 import { useServer } from "@/hooks/use-servers";
+import { downloadAuditJsonReport, openAuditHtmlReport } from "@/lib/api/audits";
 import { ACTIVE_AUDIT_STATUSES } from "@/lib/types";
 
 export function AuditDetailView({ auditId }: { auditId: string }) {
   const { data: audit, isLoading, isError, refetch } = useAudit(auditId);
   const { data: server } = useServer(audit?.server_id);
+  const [reportAction, setReportAction] = useState<"json" | "html" | null>(null);
+  const [reportError, setReportError] = useState<string | null>(null);
+
+  const runReportAction = async (action: "json" | "html") => {
+    setReportAction(action);
+    setReportError(null);
+    try {
+      if (action === "json") {
+        await downloadAuditJsonReport(auditId);
+      } else {
+        await openAuditHtmlReport(auditId);
+      }
+    } catch (error) {
+      if (isAxiosError(error) && error.response?.status === 404) {
+        setReportError("This audit could not be found.");
+      } else if (isAxiosError(error) && error.response?.status === 409) {
+        setReportError("Reports are available after the audit completes.");
+      } else if (error instanceof Error) {
+        setReportError(error.message);
+      } else {
+        setReportError("Could not retrieve the audit report.");
+      }
+    } finally {
+      setReportAction(null);
+    }
+  };
 
   if (isLoading) {
     return <LoadingState rows={6} />;
@@ -60,7 +95,37 @@ export function AuditDetailView({ auditId }: { auditId: string }) {
           {audit.audit_version} &middot; Created{" "}
           {new Date(audit.created_at).toLocaleString()}
         </p>
+        {audit.status === "COMPLETED" && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={reportAction !== null}
+              onClick={() => runReportAction("json")}
+            >
+              <DownloadIcon />
+              {reportAction === "json" ? "Downloading..." : "Download JSON Report"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={reportAction !== null}
+              onClick={() => runReportAction("html")}
+            >
+              <ExternalLinkIcon />
+              {reportAction === "html" ? "Opening..." : "View HTML Report"}
+            </Button>
+          </div>
+        )}
       </div>
+
+      {reportError && (
+        <Alert variant="destructive">
+          <AlertCircleIcon />
+          <AlertTitle>Report unavailable</AlertTitle>
+          <AlertDescription>{reportError}</AlertDescription>
+        </Alert>
+      )}
 
       {isActive && (
         <Alert>
