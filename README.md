@@ -197,6 +197,27 @@ Without a running worker, audits will stay `PENDING` forever - `GET
 in-process, so they don't need a real worker or Redis; see
 `backend/tests/conftest.py`.)
 
+### Abuse protection limits
+
+Protected API requests use the configured Redis instance for fixed-window
+limits. The defaults are deliberately high enough for normal dashboard
+polling, while bounding expensive work:
+
+- `RATE_LIMIT_REQUESTS=120` requests per `RATE_LIMIT_WINDOW_SECONDS` (60)
+  per client/API key.
+- `RATE_LIMIT_DISCOVERIES=10` discovery attempts per window.
+- `RATE_LIMIT_AUDITS=5` audit submissions per window.
+- `RATE_LIMIT_REPORTS=30` report renders per window.
+- `MAX_ACTIVE_AUDITS_PER_SERVER=1` queued or running audit per server.
+
+Discovery and audit limits prevent repeated remote MCP work and unbounded
+Celery queue growth. The report limit protects CPU-intensive HTML/PDF
+rendering. When a limit is exceeded, the API returns `429 Too Many Requests`
+with a `Retry-After` header. If Redis is unavailable, protected requests
+fail closed with `503 Service Unavailable` rather than bypassing abuse
+protection. Override these values through environment variables when
+capacity or operational requirements differ.
+
 ### Run backend tests
 
 ```powershell

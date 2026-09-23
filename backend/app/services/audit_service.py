@@ -12,7 +12,8 @@ from datetime import UTC, datetime
 from sqlalchemy.orm import Session
 
 from app.auditors.registry import AUDITOR_ENGINE_VERSION
-from app.core.exceptions import AuditNotFoundError
+from app.core.config import get_settings
+from app.core.exceptions import ActiveAuditLimitExceeded, AuditNotFoundError
 from app.models.audit import Audit
 from app.models.audit_finding import AuditFinding as AuditFindingRow
 from app.models.enums import AuditStatus
@@ -38,6 +39,11 @@ class AuditService:
         # Raises MCPServerNotFoundError (propagated to the API as 404) if
         # the server doesn't exist.
         self._server_service.get_server(server_id)
+        if (
+            self._audit_repo.count_active_for_server(server_id)
+            >= get_settings().max_active_audits_per_server
+        ):
+            raise ActiveAuditLimitExceeded(server_id)
 
         audit = Audit(
             server_id=server_id,

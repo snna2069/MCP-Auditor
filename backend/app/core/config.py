@@ -46,6 +46,14 @@ class Settings(BaseSettings):
     mcp_discovery_timeout_seconds: float = 15.0
     mcp_allowed_local_commands: list[str] = []
 
+    # Abuse protection uses one fixed window for predictable dashboard behavior.
+    rate_limit_window_seconds: int = 60
+    rate_limit_requests: int = 120
+    rate_limit_discoveries: int = 10
+    rate_limit_audits: int = 5
+    rate_limit_reports: int = 30
+    max_active_audits_per_server: int = 1
+
     @property
     def is_development(self) -> bool:
         return self.app_env.lower() == "development"

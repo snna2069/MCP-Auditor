@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.core import database
+from app.core.abuse import get_rate_limiter
 from app.core.database import get_db
 from app.main import app
 from app.models import Base
@@ -66,7 +67,13 @@ def client(db_session: Session) -> TestClient:
             pass
 
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_rate_limiter] = lambda: _TestRateLimiter()
     try:
         yield TestClient(app, headers={"X-API-Key": "test-api-key"})
     finally:
         app.dependency_overrides.clear()
+
+
+class _TestRateLimiter:
+    def check(self, key: str, policy) -> None:
+        return None

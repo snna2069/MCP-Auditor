@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.audit import Audit
+from app.models.enums import AuditStatus
 
 
 class AuditRepository:
@@ -20,6 +21,13 @@ class AuditRepository:
 
     def get(self, audit_id: uuid.UUID) -> Audit | None:
         return self._db.get(Audit, audit_id)
+
+    def count_active_for_server(self, server_id: uuid.UUID) -> int:
+        stmt = select(Audit.id).where(
+            Audit.server_id == server_id,
+            Audit.status.in_((AuditStatus.PENDING, AuditStatus.RUNNING)),
+        )
+        return len(self._db.scalars(stmt).all())
 
     def list(
         self,

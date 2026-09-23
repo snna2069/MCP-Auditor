@@ -5,8 +5,13 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.abuse import operation_rate_limit
 from app.core.database import get_db
-from app.core.exceptions import AuditNotFoundError, MCPServerNotFoundError
+from app.core.exceptions import (
+    ActiveAuditLimitExceeded,
+    AuditNotFoundError,
+    MCPServerNotFoundError,
+)
 from app.schemas.audit import AuditDetailRead, AuditFindingRead, AuditRead
 from app.services.audit_service import AuditService
 
@@ -17,6 +22,7 @@ router = APIRouter(tags=["audits"])
     "/servers/{server_id}/audits",
     response_model=AuditRead,
     status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(operation_rate_limit("audits", "rate_limit_audits"))],
 )
 def create_audit(server_id: uuid.UUID, db: Session = Depends(get_db)) -> AuditRead:
     """Trigger an audit. Runs asynchronously - poll GET /audits/{id} for results."""
@@ -25,6 +31,12 @@ def create_audit(server_id: uuid.UUID, db: Session = Depends(get_db)) -> AuditRe
         audit = service.create_audit(server_id)
     except MCPServerNotFoundError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ActiveAuditLimitExceeded as exc:
+        raise HTTPException(
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=str(exc),
+            headers={"Retry-After": "30"},
+        ) from exc
     return AuditRead.model_validate(audit)
 
 

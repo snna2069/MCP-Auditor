@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse, Response
 from sqlalchemy.orm import Session
 
+from app.core.abuse import operation_rate_limit
 from app.core.database import get_db
 from app.core.exceptions import AuditIncompleteError, AuditNotFoundError
 from app.schemas.report import AuditReport
@@ -16,18 +17,29 @@ from app.services.report_service import ReportService
 router = APIRouter(tags=["reports"])
 
 
-@router.get("/audits/{audit_id}/report", response_model=AuditReport)
+@router.get(
+    "/audits/{audit_id}/report",
+    response_model=AuditReport,
+    dependencies=[Depends(operation_rate_limit("reports", "rate_limit_reports"))],
+)
 def get_audit_report(audit_id: uuid.UUID, db: Session = Depends(get_db)) -> AuditReport:
     return _load_report(audit_id, db)
 
 
-@router.get("/audits/{audit_id}/report/html", response_class=HTMLResponse)
+@router.get(
+    "/audits/{audit_id}/report/html",
+    response_class=HTMLResponse,
+    dependencies=[Depends(operation_rate_limit("reports", "rate_limit_reports"))],
+)
 def get_audit_report_html(audit_id: uuid.UUID, db: Session = Depends(get_db)) -> HTMLResponse:
     report = _load_report(audit_id, db)
     return HTMLResponse(content=render_audit_report_html(report), media_type="text/html")
 
 
-@router.get("/audits/{audit_id}/report/pdf")
+@router.get(
+    "/audits/{audit_id}/report/pdf",
+    dependencies=[Depends(operation_rate_limit("reports", "rate_limit_reports"))],
+)
 def get_audit_report_pdf(audit_id: uuid.UUID, db: Session = Depends(get_db)) -> Response:
     report = _load_report(audit_id, db)
     return Response(

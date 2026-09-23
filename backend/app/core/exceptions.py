@@ -40,3 +40,11 @@ class AuditIncompleteError(DomainError):
     def __init__(self, audit_id: object) -> None:
         self.audit_id = audit_id
         super().__init__(f"Audit '{audit_id}' is not complete.")
+
+
+class ActiveAuditLimitExceeded(DomainError):
+    """Raised when a server already has its allowed active audits."""
+
+    def __init__(self, server_id: object) -> None:
+        self.server_id = server_id
+        super().__init__(f"Server '{server_id}' already has an active audit.")
