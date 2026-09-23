@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     # Per-connection timeout (seconds) when discovering tools from an MCP server.
     mcp_discovery_timeout_seconds: float = 15.0
     mcp_allowed_local_commands: list[str] = []
+    mcp_sandbox_image: str = "mcp-auditor-mcp-sandbox:latest"
+    mcp_execution_memory_limit: str = "256m"
+    mcp_execution_cpu_limit: float = 1.0
+    mcp_execution_pids_limit: int = 64
+    mcp_execution_max_output_bytes: int = 1_048_576
 
     # Abuse protection uses one fixed window for predictable dashboard behavior.
     rate_limit_window_seconds: int = 60

@@ -37,6 +37,9 @@ def main() -> None:
         if method == "initialize":
             if delay:
                 time.sleep(delay)
+            if scenario.get("malformed"):
+                print("not-json", flush=True)
+                continue
             response = {
                 "jsonrpc": "2.0",
                 "id": message["id"],
@@ -52,6 +55,8 @@ def main() -> None:
         elif method == "notifications/initialized":
             continue  # notifications get no response
         elif method == "tools/list":
+            if scenario.get("large_output"):
+                tools = [{"name": "x" * 2_000_000}]
             response = {"jsonrpc": "2.0", "id": message["id"], "result": {"tools": tools}}
             print(json.dumps(response), flush=True)
         else:

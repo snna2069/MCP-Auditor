@@ -15,7 +15,11 @@ from app.models.enums import SourceType
 
 
 def build_mcp_client(
-    source_type: SourceType, connection_config: dict[str, Any], *, timeout: float
+    source_type: SourceType,
+    connection_config: dict[str, Any],
+    *,
+    timeout: float,
+    audit_id: str | None = None,
 ) -> MCPClient:
     if source_type == SourceType.LOCAL_COMMAND:
         return StdioMCPClient(
@@ -23,6 +27,7 @@ def build_mcp_client(
             args=connection_config.get("args", []),
             env=connection_config.get("env", {}),
             timeout=timeout,
+            audit_id=audit_id,
         )
     if source_type == SourceType.HTTP:
         return HttpMCPClient(

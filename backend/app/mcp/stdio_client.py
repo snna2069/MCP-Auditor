@@ -1,28 +1,25 @@
-"""MCP client for the ``LOCAL_COMMAND`` source type.
-
-Launches the configured command as a subprocess and speaks line-delimited
-JSON-RPC over its stdin/stdout, per the MCP stdio transport spec. Uses a
-background reader thread + queue (rather than ``select``) so timeouts work
-on Windows, where ``select`` does not support pipe file descriptors.
-
-This module only *reads* tool metadata during discovery; it never invokes
-tools, per the project's security principle of treating discovered
-servers as untrusted until an audit explicitly calls a tool.
-"""
+"""MCP stdio transport backed by an isolated execution backend."""
 
 import json
-import os
 import queue
-import subprocess
 import threading
+import time
+import uuid
+from datetime import UTC, datetime
 
 from app.mcp.base import MCPClient, MCPDiscoveryResult
-from app.mcp.exceptions import MCPConnectionError, MCPProtocolError, MCPTimeoutError
+from app.mcp.exceptions import MCPClientError, MCPConnectionError, MCPProtocolError, MCPTimeoutError
+from app.mcp.execution import (
+    DockerSandboxBackend,
+    ExecutionBackend,
+    ExecutionPolicy,
+    ExecutionProcess,
+    ExecutionRecord,
+    execution_policy,
+)
 from app.mcp.jsonrpc import build_notification, build_request, next_request_id, parse_response
 from app.mcp.wire_models import INITIALIZE_PARAMS, parse_tools
 
-# Safety cap on tools/list pagination so a misbehaving server can't force an
-# unbounded loop.
 _MAX_PAGES = 20
 
 
@@ -33,50 +30,72 @@ class StdioMCPClient(MCPClient):
         args: list[str] | None = None,
         env: dict[str, str] | None = None,
         timeout: float = 15.0,
+        audit_id: str | None = None,
+        backend: ExecutionBackend | None = None,
+        policy: ExecutionPolicy | None = None,
     ) -> None:
         self._command = command
         self._args = args or []
         self._env = env or {}
         self._timeout = timeout
+        self._audit_id = uuid.UUID(audit_id) if audit_id else uuid.uuid4()
+        self._backend = backend or DockerSandboxBackend()
+        self._policy = policy or execution_policy()
+        self._deadline = 0.0
 
     def discover(self) -> MCPDiscoveryResult:
-        # Merge with the parent environment (e.g. so PATH resolves the
-        # command) then apply user-provided overrides. Never log self._env -
-        # it may contain secrets the user configured for the command.
-        merged_env = {**os.environ, **self._env}
+        execution = ExecutionRecord(
+            execution_id=uuid.uuid4(),
+            audit_id=self._audit_id,
+            started_at=datetime.now(UTC),
+        )
         try:
-            process = subprocess.Popen(  # noqa: S603 - command is user-configured by design
-                [self._command, *self._args],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                bufsize=1,
-                env=merged_env,
+            process = self._backend.start(
+                self._command,
+                self._args,
+                self._env,
+                execution,
+                self._policy,
             )
-        except OSError as exc:
-            raise MCPConnectionError(
-                f"Could not launch local command '{self._command}': {exc}"
-            ) from exc
+        except (OSError, RuntimeError) as exc:
+            execution.status = "FAILED"
+            execution.error = type(exc).__name__
+            execution.ended_at = datetime.now(UTC)
+            raise MCPConnectionError("Could not start the MCP sandbox.") from exc
 
-        stdout_queue: queue.Queue[str | None] = queue.Queue()
+        output_queue: queue.Queue[object] = queue.Queue()
+        output_bytes = [0]
+        self._deadline = time.monotonic() + min(
+            self._timeout, self._policy.timeout_seconds
+        )
         reader = threading.Thread(
-            target=_pump_lines, args=(process.stdout, stdout_queue), daemon=True
+            target=_pump_lines,
+            args=(process.stdout, output_queue, self._policy.max_output_bytes, output_bytes),
+            daemon=True,
         )
         reader.start()
-
         try:
-            return self._run_handshake(process, stdout_queue)
+            result = self._run_handshake(process, output_queue)
+            execution.status = "COMPLETED"
+            return result
+        except MCPTimeoutError:
+            execution.status = "TIMEOUT"
+            raise
+        except MCPClientError as exc:
+            execution.status = "FAILED"
+            execution.error = type(exc).__name__
+            raise
         finally:
-            _terminate(process)
+            execution.exit_code = process.poll()
+            execution.output_bytes = output_bytes[0]
+            self._backend.cleanup(process, execution)
 
     def _run_handshake(
-        self, process: subprocess.Popen, stdout_queue: "queue.Queue[str | None]"
+        self, process: ExecutionProcess, output_queue: "queue.Queue[object]"
     ) -> MCPDiscoveryResult:
         init_id = next_request_id()
         self._send(process, build_request("initialize", INITIALIZE_PARAMS, init_id))
-        init_result = parse_response(self._recv(process, stdout_queue), expected_id=init_id)
-
+        init_result = parse_response(self._recv(process, output_queue), expected_id=init_id)
         self._send(process, build_notification("notifications/initialized", None))
 
         tools = []
@@ -85,7 +104,7 @@ class StdioMCPClient(MCPClient):
             list_id = next_request_id()
             params = {"cursor": cursor} if cursor else None
             self._send(process, build_request("tools/list", params, list_id))
-            result = parse_response(self._recv(process, stdout_queue), expected_id=list_id)
+            result = parse_response(self._recv(process, output_queue), expected_id=list_id)
             tools.extend(parse_tools(result.get("tools", [])))
             cursor = result.get("nextCursor")
             if not cursor:
@@ -99,68 +118,52 @@ class StdioMCPClient(MCPClient):
             tools=tools,
         )
 
-    def _send(self, process: subprocess.Popen, message: dict) -> None:
+    def _send(self, process: ExecutionProcess, message: dict) -> None:
         if process.poll() is not None:
-            raise MCPConnectionError(
-                f"Process exited before request could be sent "
-                f"(code {process.returncode}).{_stderr_suffix(process)}"
-            )
+            raise MCPConnectionError("MCP process exited before the request was sent.")
         try:
             process.stdin.write(json.dumps(message) + "\n")
             process.stdin.flush()
         except (BrokenPipeError, OSError) as exc:
-            raise MCPConnectionError(f"Failed to write to process stdin: {exc}") from exc
+            raise MCPConnectionError("Failed to write to the MCP process.") from exc
 
-    def _recv(self, process: subprocess.Popen, stdout_queue: "queue.Queue[str | None]") -> dict:
+    def _recv(self, process: ExecutionProcess, output_queue: "queue.Queue[object]") -> dict:
+        remaining = self._deadline - time.monotonic()
+        if remaining <= 0:
+            raise MCPTimeoutError("MCP execution exceeded its timeout.")
         try:
-            line = stdout_queue.get(timeout=self._timeout)
+            line = output_queue.get(timeout=min(self._timeout, remaining))
         except queue.Empty as exc:
             raise MCPTimeoutError(
-                f"Timed out after {self._timeout}s waiting for a response."
+                f"Timed out after {self._timeout}s waiting for an MCP response."
             ) from exc
-
         if line is None:
-            raise MCPConnectionError(
-                f"Process closed stdout before responding.{_stderr_suffix(process)}"
-            )
-
+            raise MCPConnectionError("MCP process closed stdout before responding.")
+        if isinstance(line, _OutputLimitExceeded):
+            raise MCPProtocolError("MCP output exceeded the configured limit.")
         try:
             return json.loads(line)
-        except json.JSONDecodeError as exc:
-            raise MCPProtocolError(f"Received non-JSON line from process: {exc}") from exc
+        except (TypeError, json.JSONDecodeError) as exc:
+            raise MCPProtocolError("MCP response was not valid JSON.") from exc
 
 
-def _pump_lines(stream, out_queue: "queue.Queue[str | None]") -> None:
+class _OutputLimitExceeded:
+    pass
+
+
+def _pump_lines(
+    stream, output_queue: "queue.Queue[object]", maximum: int, output_count: list[int]
+) -> None:
     try:
         for line in iter(stream.readline, ""):
             stripped = line.strip()
             if stripped:
-                out_queue.put(stripped)
-    except ValueError:
-        pass  # Stream closed while reading (process terminated concurrently).
-    finally:
-        out_queue.put(None)
-
-
-def _stderr_suffix(process: subprocess.Popen) -> str:
-    # Only safe to read stderr to EOF once the process has actually exited;
-    # otherwise .read() could block indefinitely.
-    if process.poll() is None or process.stderr is None:
-        return ""
-    try:
-        tail = process.stderr.read().strip()
-    except OSError:
-        return ""
-    return f" stderr: {tail}" if tail else ""
-
-
-def _terminate(process: subprocess.Popen) -> None:
-    if process.poll() is not None:
-        return
-    try:
-        process.terminate()
-        process.wait(timeout=2)
-    except subprocess.TimeoutExpired:
-        process.kill()
-    except OSError:
+                output_count[0] += len(stripped.encode("utf-8"))
+                if output_count[0] > maximum:
+                    output_queue.put(_OutputLimitExceeded())
+                    return
+                output_queue.put(stripped)
+    except (OSError, ValueError):
         pass
+    finally:
+        output_queue.put(None)

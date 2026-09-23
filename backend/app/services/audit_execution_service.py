@@ -59,7 +59,7 @@ class AuditExecutionService:
         self._audit_repo.save(audit)
 
         try:
-            server, tool_rows = self._discovery_service.discover(audit.server_id)
+            server, tool_rows = self._discovery_service.discover(audit.server_id, audit.id)
 
             if server.last_discovery_status == DiscoveryStatus.FAILED:
                 self._fail(audit, server.last_discovery_error or "Tool discovery failed.")

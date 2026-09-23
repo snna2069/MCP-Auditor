@@ -120,6 +120,7 @@ to open the full-resolution view.
 backend/    FastAPI + SQLAlchemy + Alembic application
 frontend/   Next.js + TypeScript + Tailwind + TanStack Query application
 docker-compose.yml   PostgreSQL + Redis for local development
+docker/mcp-sandbox/  Hardened image used for local-command MCP execution
 ```
 
 ## Prerequisites
@@ -217,6 +218,28 @@ with a `Retry-After` header. If Redis is unavailable, protected requests
 fail closed with `503 Service Unavailable` rather than bypassing abuse
 protection. Override these values through environment variables when
 capacity or operational requirements differ.
+
+### MCP execution isolation
+
+`LOCAL_COMMAND` MCP servers are never launched directly by the auditor in
+production. Each discovery runs in a disposable Docker container using the
+image configured by `MCP_SANDBOX_IMAGE` (default:
+`mcp-auditor-mcp-sandbox:latest`). The container has no network, no host
+mounts, a read-only root filesystem, a bounded `/tmp`, dropped Linux
+capabilities, `no-new-privileges`, and configured memory, CPU, PID, timeout,
+and output limits. The image must contain the approved MCP command and its
+dependencies; arbitrary host executables are not mounted into it.
+
+Build the baseline image before using local-command discovery:
+
+```powershell
+docker build -t mcp-auditor-mcp-sandbox:latest docker\mcp-sandbox
+```
+
+If Docker or the configured sandbox image is unavailable, local-command
+execution fails closed. Tests that use the repository's fake MCP process
+explicitly inject the test-only subprocess backend and do not represent the
+production isolation boundary.
 
 ### Run backend tests
 

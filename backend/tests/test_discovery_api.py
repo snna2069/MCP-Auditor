@@ -6,6 +6,9 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
+from app.mcp import stdio_client
+from app.mcp.execution import SubprocessBackend
+
 FAKE_SERVER_PATH = str(Path(__file__).parent / "fixtures" / "fake_stdio_server.py")
 
 
@@ -63,7 +66,10 @@ def test_tools_endpoint_empty_before_discovery(client: TestClient) -> None:
     assert response.json() == []
 
 
-def test_discover_local_command_server_succeeds(client: TestClient) -> None:
+def test_discover_local_command_server_succeeds(
+    client: TestClient, monkeypatch
+) -> None:
+    monkeypatch.setattr(stdio_client, "DockerSandboxBackend", SubprocessBackend)
     scenario = json.dumps(
         {
             "tools": [

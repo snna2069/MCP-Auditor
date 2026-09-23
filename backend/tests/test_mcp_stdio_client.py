@@ -6,7 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from app.mcp.exceptions import MCPConnectionError, MCPTimeoutError
+from app.mcp.exceptions import MCPConnectionError, MCPProtocolError, MCPTimeoutError
+from app.mcp.execution import ExecutionPolicy, SubprocessBackend
 from app.mcp.stdio_client import StdioMCPClient
 
 FAKE_SERVER_PATH = str(Path(__file__).parent / "fixtures" / "fake_stdio_server.py")
@@ -30,6 +31,7 @@ def _client(scenario: dict, timeout: float = 5.0) -> StdioMCPClient:
         args=[FAKE_SERVER_PATH],
         env={"FAKE_MCP_SCENARIO": json.dumps(scenario)},
         timeout=timeout,
+        backend=SubprocessBackend(),
     )
 
 
@@ -72,4 +74,36 @@ def test_discover_raises_on_missing_command() -> None:
     client = StdioMCPClient(command="this-command-does-not-exist-anywhere", timeout=2.0)
 
     with pytest.raises(MCPConnectionError):
+        client.discover()
+
+
+def test_discover_rejects_oversized_output() -> None:
+    client = StdioMCPClient(
+        command=sys.executable,
+        args=[FAKE_SERVER_PATH],
+        env={"FAKE_MCP_SCENARIO": json.dumps({"large_output": True})},
+        timeout=2.0,
+        backend=SubprocessBackend(),
+        policy=ExecutionPolicy(2.0, "256m", 1.0, 16, 1024, "unused"),
+    )
+
+    with pytest.raises(MCPProtocolError, match="output exceeded"):
+        client.discover()
+
+
+def test_discover_rejects_malformed_output_and_cleans_up() -> None:
+    client = StdioMCPClient(
+        command=sys.executable,
+        args=[FAKE_SERVER_PATH],
+        env={"FAKE_MCP_SCENARIO": json.dumps({"malformed": True})},
+        timeout=2.0,
+        backend=SubprocessBackend(),
+    )
+
+    with pytest.raises(MCPProtocolError, match="valid JSON"):
+        client.discover()
+
+    # The backend cleanup is in the client's finally block; a second
+    # invocation must be able to start cleanly rather than reusing a child.
+    with pytest.raises(MCPProtocolError):
         client.discover()

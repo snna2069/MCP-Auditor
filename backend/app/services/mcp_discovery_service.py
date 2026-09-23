@@ -27,7 +27,9 @@ class MCPDiscoveryService:
         self._server_service = MCPServerService(db)
         self._tool_repo = MCPServerToolRepository(db)
 
-    def discover(self, server_id: uuid.UUID) -> tuple[MCPServer, list[MCPServerTool]]:
+    def discover(
+        self, server_id: uuid.UUID, audit_id: uuid.UUID | None = None
+    ) -> tuple[MCPServer, list[MCPServerTool]]:
         """Run discovery for a server, persist the outcome, and return it.
 
         Raises MCPServerNotFoundError (propagated from the server service)
@@ -49,6 +51,7 @@ class MCPDiscoveryService:
                 server.source_type,
                 connection_config,
                 timeout=settings.mcp_discovery_timeout_seconds,
+                audit_id=str(audit_id or server_id),
             )
             result = client.discover()
         except MCPClientError as exc:
