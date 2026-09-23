@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     app_version: str = "0.1.0"
     app_env: str = "development"
     log_level: str = "INFO"
+    observability_log_level: str = ""
 
     api_prefix: str = "/api/v1"
 

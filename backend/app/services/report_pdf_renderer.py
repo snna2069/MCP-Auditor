@@ -1,6 +1,8 @@
 """Render the canonical audit report as a paginated PDF."""
 
 import json
+import logging
+import time
 from io import BytesIO
 from typing import Any
 from xml.sax.saxutils import escape
@@ -18,11 +20,15 @@ from reportlab.platypus import (
     TableStyle,
 )
 
+from app.core.observability import correlation_fields, elapsed, metrics
 from app.schemas.report import AuditReport, ReportFinding
+
+logger = logging.getLogger(__name__)
 
 
 def render_audit_report_pdf(report: AuditReport) -> bytes:
     """Render all canonical report fields into a downloadable PDF."""
+    started = time.monotonic()
     buffer = BytesIO()
     document = SimpleDocTemplate(
         buffer,
@@ -79,7 +85,15 @@ def render_audit_report_pdf(report: AuditReport) -> bytes:
     ]
     story.extend(_finding_flowables(report.findings, styles))
     document.build(story)
-    return buffer.getvalue()
+    result = buffer.getvalue()
+    metrics.observe("report_render_duration_seconds", elapsed(started), format="pdf")
+    logger.info(
+        "report rendered",
+        extra=correlation_fields(
+            audit_id=report.audit_id, format="pdf", duration_seconds=elapsed(started)
+        ),
+    )
+    return result
 
 
 def _metadata_table(

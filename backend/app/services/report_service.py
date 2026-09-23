@@ -1,10 +1,13 @@
 """Builds stable reports from persisted audit results."""
 
+import logging
+import time
 import uuid
 
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import AuditIncompleteError, AuditNotFoundError
+from app.core.observability import correlation_fields, elapsed, metrics
 from app.models.audit_finding import AuditFinding as AuditFindingRow
 from app.models.enums import AuditStatus
 from app.repositories.audit_finding_repository import AuditFindingRepository
@@ -13,6 +16,8 @@ from app.repositories.mcp_server_repository import MCPServerRepository
 from app.schemas.audit_finding import AuditFinding
 from app.schemas.report import AuditReport, ReportFinding, ReportMetadata, ReportServer
 from app.scoring.risk_scorer import RiskScorer
+
+logger = logging.getLogger(__name__)
 
 REPORT_SCHEMA_VERSION = "1"
 
@@ -25,6 +30,8 @@ class ReportService:
         self._scorer = RiskScorer()
 
     def build_audit_report(self, audit_id: uuid.UUID) -> AuditReport:
+        started = time.monotonic()
+        logger.info("report generation started", extra=correlation_fields(audit_id=audit_id))
         audit = self._audit_repo.get(audit_id)
         if audit is None:
             raise AuditNotFoundError(audit_id)
@@ -39,7 +46,7 @@ class ReportService:
         findings = [_to_domain_finding(row) for row in rows]
         breakdown = self._scorer.score(findings)
 
-        return AuditReport(
+        report = AuditReport(
             report_metadata=ReportMetadata(
                 schema_version=REPORT_SCHEMA_VERSION,
                 report_timestamp=audit.completed_at or audit.created_at,
@@ -66,6 +73,13 @@ class ReportService:
             score_contributors=breakdown.score_contributors,
             findings=[ReportFinding.model_validate(row) for row in rows],
         )
+        metrics.increment("reports_generated_total")
+        metrics.observe("report_generation_duration_seconds", elapsed(started))
+        logger.info(
+            "report generation completed",
+            extra=correlation_fields(audit_id=audit_id, duration_seconds=elapsed(started)),
+        )
+        return report
 
 
 def _to_domain_finding(row: AuditFindingRow) -> AuditFinding:

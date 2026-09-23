@@ -2,6 +2,7 @@
 
 from collections.abc import Iterable
 
+from app.core.observability import metrics
 from app.models.enums import AuditCategory, Severity
 from app.schemas.audit_finding import AuditFinding
 from app.schemas.score_result import ScoreContributor, ScoreResult
@@ -15,6 +16,11 @@ class RiskScorer:
         self._config = config or get_scoring_config()
 
     def score(self, findings: list[AuditFinding]) -> ScoreResult:
+        metrics.increment("scoring_runs_total")
+        for severity in Severity:
+            count = sum(1 for finding in findings if finding.severity == severity)
+            if count:
+                metrics.increment("findings_by_severity", count, severity=severity.value)
         contributors = [self._contributor_for(finding) for finding in findings]
 
         overall_score = self._apply_deductions(c.contribution for c in contributors)

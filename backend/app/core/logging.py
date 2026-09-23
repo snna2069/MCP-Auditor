@@ -6,6 +6,7 @@ log aggregation tools, while remaining human-readable in local development.
 
 import json
 import logging
+import re
 import sys
 from datetime import UTC, datetime
 from typing import Any
@@ -23,11 +24,12 @@ class JSONFormatter(logging.Formatter):
         }
 
         if record.exc_info:
-            payload["exception"] = self.formatException(record.exc_info)
+            payload["exception_type"] = record.exc_info[0].__name__
 
         extra_keys = set(record.__dict__) - _STANDARD_LOG_RECORD_KEYS
         for key in extra_keys:
-            payload[key] = record.__dict__[key]
+            if key not in {"args", "exc_text", "stack_info"} and not _sensitive(key):
+                payload[key] = _safe_value(record.__dict__[key])
 
         return json.dumps(payload, default=str)
 
@@ -43,6 +45,27 @@ _STANDARD_LOG_RECORD_KEYS = set(
         exc_info=None,
     ).__dict__
 )
+_SENSITIVE_PATTERN = re.compile(
+    r"(password|secret|token|api[_-]?key|credential|authorization|cookie|private[_-]?key)",
+    re.IGNORECASE,
+)
+
+
+def _sensitive(value: str) -> bool:
+    return bool(_SENSITIVE_PATTERN.search(value))
+
+
+def _safe_value(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            key: "[REDACTED]" if _sensitive(str(key)) else _safe_value(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, (list, tuple)):
+        return [_safe_value(item) for item in value[:20]]
+    if isinstance(value, str) and len(value) > 512:
+        return value[:512] + "...[TRUNCATED]"
+    return value
 
 
 def configure_logging(log_level: str = "INFO") -> None:

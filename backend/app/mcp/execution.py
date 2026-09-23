@@ -11,6 +11,7 @@ from datetime import UTC, datetime
 from typing import Protocol
 
 from app.core.config import get_settings
+from app.core.observability import correlation_fields, metrics
 
 logger = logging.getLogger(__name__)
 
@@ -154,6 +155,7 @@ class DockerSandboxBackend:
                 env=safe_env,
             )
         except OSError as exc:
+            metrics.increment("mcp_execution_failures_total", reason=type(exc).__name__)
             raise RuntimeError("Could not start the MCP sandbox runtime.") from exc
         execution.status = "RUNNING"
         _log_execution(execution, "started")
@@ -185,6 +187,17 @@ class DockerSandboxBackend:
         execution.ended_at = datetime.now(UTC)
         if execution.status == "RUNNING":
             execution.status = "COMPLETED" if execution.exit_code == 0 else "FAILED"
+        duration = (
+            (execution.ended_at - execution.started_at).total_seconds()
+            if execution.ended_at
+            else 0.0
+        )
+        metrics.observe("mcp_execution_duration_seconds", duration, status=execution.status.lower())
+        if execution.status != "COMPLETED":
+            metrics.increment(
+                "mcp_execution_failures_total",
+                reason=execution.error or execution.status.lower(),
+            )
         _log_execution(execution, "finished")
 
 
@@ -240,13 +253,13 @@ def _log_execution(execution: ExecutionRecord, event: str) -> None:
     logger.info(
         "mcp execution %s",
         event,
-        extra={
-            "execution_id": str(execution.execution_id),
-            "audit_id": str(execution.audit_id),
-            "started_at": execution.started_at.isoformat(),
-            "ended_at": execution.ended_at.isoformat() if execution.ended_at else None,
-            "status": execution.status,
-            "exit_code": execution.exit_code,
-            "output_bytes": execution.output_bytes,
-        },
+        extra=correlation_fields(
+            execution_id=execution.execution_id,
+            audit_id=execution.audit_id,
+            started_at=execution.started_at.isoformat(),
+            ended_at=execution.ended_at.isoformat() if execution.ended_at else None,
+            status=execution.status,
+            exit_code=execution.exit_code,
+            output_bytes=execution.output_bytes,
+        ),
     )

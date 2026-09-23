@@ -2,14 +2,20 @@
 
 import html
 import json
+import logging
+import time
 from collections.abc import Iterable
 from typing import Any
 
+from app.core.observability import correlation_fields, elapsed, metrics
 from app.schemas.report import AuditReport, ReportFinding
+
+logger = logging.getLogger(__name__)
 
 
 def render_audit_report_html(report: AuditReport) -> str:
     """Render every report field from the canonical ``AuditReport`` model."""
+    started = time.monotonic()
     categories = _render_rows(
         ((category.value, score) for category, score in report.category_scores.items()),
         empty_message="No category scores.",
@@ -21,7 +27,7 @@ def render_audit_report_html(report: AuditReport) -> str:
     contributors = _render_contributors(report.score_contributors)
     findings = _render_findings(report.findings)
 
-    return f"""<!doctype html>
+    rendered = f"""<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -105,6 +111,14 @@ def render_audit_report_html(report: AuditReport) -> str:
 </body>
 </html>
 """
+    metrics.observe("report_render_duration_seconds", elapsed(started), format="html")
+    logger.info(
+        "report rendered",
+        extra=correlation_fields(
+            audit_id=report.audit_id, format="html", duration_seconds=elapsed(started)
+        ),
+    )
+    return rendered
 
 
 def _text(value: Any) -> str:

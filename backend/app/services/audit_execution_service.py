@@ -10,12 +10,14 @@ mark audit complete.
 """
 
 import logging
+import time
 import uuid
 from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
 from app.auditors.registry import run_auditors
+from app.core.observability import correlation_fields, elapsed, metrics
 from app.models.audit import Audit
 from app.models.enums import AuditStatus, DiscoveryStatus
 from app.repositories.audit_finding_repository import AuditFindingRepository
@@ -49,6 +51,9 @@ class AuditExecutionService:
             logger.exception("unrecoverable error running audit", extra={"audit_id": str(audit_id)})
 
     def _run(self, audit_id: uuid.UUID) -> None:
+        started = time.monotonic()
+        metrics.increment("audits_started_total")
+        logger.info("audit started", extra=correlation_fields(audit_id=audit_id))
         audit = self._audit_repo.get(audit_id)
         if audit is None:
             logger.error("audit not found, cannot execute", extra={"audit_id": str(audit_id)})
@@ -62,7 +67,12 @@ class AuditExecutionService:
             server, tool_rows = self._discovery_service.discover(audit.server_id, audit.id)
 
             if server.last_discovery_status == DiscoveryStatus.FAILED:
-                self._fail(audit, server.last_discovery_error or "Tool discovery failed.")
+                self._fail(
+                    audit,
+                    server.last_discovery_error or "Tool discovery failed.",
+                    started,
+                    "discovery",
+                )
                 return
 
             tools = [tool_profile_from_row(row) for row in tool_rows]
@@ -80,16 +90,45 @@ class AuditExecutionService:
             audit.status = AuditStatus.COMPLETED
             audit.completed_at = datetime.now(UTC)
             self._audit_repo.save(audit)
+            metrics.increment("audits_completed_total")
+            metrics.observe("audit_duration_seconds", elapsed(started))
+            logger.info(
+                "audit completed",
+                extra=correlation_fields(
+                    audit_id=audit.id,
+                    duration_seconds=elapsed(started),
+                    findings_count=len(findings),
+                ),
+            )
         except Exception as exc:
-            logger.exception("audit pipeline failed", extra={"audit_id": str(audit_id)})
+            metrics.increment("audits_failed_total", reason=type(exc).__name__)
+            metrics.observe("audit_duration_seconds", elapsed(started), status="failed")
+            logger.exception(
+                "audit pipeline failed",
+                extra=correlation_fields(audit_id=audit_id, failure_reason=type(exc).__name__),
+            )
             self._fail(
                 audit,
                 f"Audit failed due to an internal error ({type(exc).__name__}). "
                 "See server logs for details.",
+                failure_reason=type(exc).__name__,
             )
 
-    def _fail(self, audit: Audit, error_message: str) -> None:
+    def _fail(
+        self,
+        audit: Audit,
+        error_message: str,
+        started: float | None = None,
+        failure_reason: str = "discovery",
+    ) -> None:
         audit.status = AuditStatus.FAILED
         audit.completed_at = datetime.now(UTC)
         audit.error_message = error_message
         self._audit_repo.save(audit)
+        metrics.increment("audits_failed_total", reason=failure_reason)
+        if started is not None:
+            metrics.observe("audit_duration_seconds", elapsed(started), status="failed")
+        logger.warning(
+            "audit failed",
+            extra=correlation_fields(audit_id=audit.id, failure_reason=failure_reason),
+        )

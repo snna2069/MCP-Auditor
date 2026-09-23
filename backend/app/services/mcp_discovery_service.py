@@ -5,12 +5,15 @@ live in the repositories. This service just wires them together and
 translates client failures into a sanitized, persisted outcome.
 """
 
+import logging
+import time
 import uuid
 from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
+from app.core.observability import correlation_fields, elapsed, metrics
 from app.mcp.exceptions import MCPClientError
 from app.mcp.factory import build_mcp_client
 from app.models.enums import DiscoveryStatus
@@ -19,6 +22,8 @@ from app.models.mcp_server_tool import MCPServerTool
 from app.repositories.mcp_server_tool_repository import MCPServerToolRepository
 from app.schemas.tool_profile import ToolAnnotations, ToolProfile
 from app.services.mcp_server_service import MCPServerService
+
+logger = logging.getLogger(__name__)
 
 
 class MCPDiscoveryService:
@@ -40,6 +45,11 @@ class MCPDiscoveryService:
         server = self._server_service.get_server(server_id)
         connection_config = MCPServerService.decrypt_connection_config(server)
         settings = get_settings()
+        started = time.monotonic()
+        logger.info(
+            "mcp discovery started",
+            extra=correlation_fields(audit_id=audit_id, server_id=server_id),
+        )
 
         try:
             if (
@@ -59,6 +69,15 @@ class MCPDiscoveryService:
             server.last_discovered_at = datetime.now(UTC)
             server.last_discovery_error = str(exc)
             self._db.commit()
+            metrics.increment("mcp_discovery_failures_total", reason=type(exc).__name__)
+            metrics.observe("mcp_discovery_duration_seconds", elapsed(started), status="failed")
+            logger.warning(
+                "mcp discovery failed",
+                extra=correlation_fields(
+                    audit_id=audit_id, server_id=server_id, failure_reason=type(exc).__name__,
+                    duration_seconds=elapsed(started),
+                ),
+            )
             return server, self._tool_repo.list_by_server(server_id)
 
         rows = [_to_row(profile) for profile in _dedupe_by_name(result.tools)]
@@ -68,6 +87,14 @@ class MCPDiscoveryService:
         server.last_discovered_at = datetime.now(UTC)
         server.last_discovery_error = None
         self._db.commit()
+        metrics.observe("mcp_discovery_duration_seconds", elapsed(started), status="success")
+        logger.info(
+            "mcp discovery completed",
+            extra=correlation_fields(
+                audit_id=audit_id, server_id=server_id, tool_count=len(persisted),
+                duration_seconds=elapsed(started),
+            ),
+        )
 
         return server, persisted
 
