@@ -5,7 +5,10 @@ response per request, since the spec allows either. Accepts an injectable
 ``httpx`` transport so tests never need a real network connection.
 """
 
+import ipaddress
 import json
+import socket
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -26,6 +29,8 @@ class HttpMCPClient(MCPClient):
         timeout: float = 15.0,
         transport: httpx.BaseTransport | None = None,
     ) -> None:
+        if transport is None:
+            _validate_public_http_url(url)
         self._url = url
         self._headers = headers or {}
         self._timeout = timeout
@@ -115,6 +120,35 @@ def _parse_body(response: httpx.Response) -> dict:
         return response.json()
     except ValueError as exc:
         raise MCPProtocolError(f"Server response was not valid JSON: {exc}") from exc
+
+
+def _validate_public_http_url(url: str) -> None:
+    parsed = urlsplit(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+        raise MCPConnectionError("MCP URL must use HTTP(S) and include a hostname.")
+    try:
+        addresses = {
+            sockaddr[4][0]
+            for sockaddr in socket.getaddrinfo(
+                parsed.hostname, parsed.port, type=socket.SOCK_STREAM
+            )
+        }
+    except OSError as exc:
+        raise MCPConnectionError("MCP host could not be resolved.") from exc
+    if not addresses or any(_is_blocked_address(address) for address in addresses):
+        raise MCPConnectionError("MCP URL resolves to a blocked network address.")
+
+
+def _is_blocked_address(address: str) -> bool:
+    parsed = ipaddress.ip_address(address)
+    return (
+        parsed.is_private
+        or parsed.is_loopback
+        or parsed.is_link_local
+        or parsed.is_multicast
+        or parsed.is_reserved
+        or parsed.is_unspecified
+    )
 
 
 def _parse_sse(body: str) -> dict:

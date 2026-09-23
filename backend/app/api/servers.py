@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.exceptions import MCPServerNotFoundError
 from app.models.mcp_server import MCPServer
-from app.schemas.mcp_server import MCPServerCreate, MCPServerRead
+from app.schemas.mcp_server import MCPServerCreate, MCPServerRead, redact_connection_config
 from app.services.mcp_server_service import MCPServerService
 
 router = APIRouter(prefix="/servers", tags=["servers"])
@@ -19,7 +19,9 @@ def _to_read_schema(server: MCPServer) -> MCPServerRead:
         id=server.id,
         name=server.name,
         source_type=server.source_type,
-        connection_config=MCPServerService.decrypt_connection_config(server),
+        connection_config=redact_connection_config(
+            server.source_type, MCPServerService.decrypt_connection_config(server)
+        ),
         created_at=server.created_at,
         updated_at=server.updated_at,
         last_discovery_status=server.last_discovery_status,

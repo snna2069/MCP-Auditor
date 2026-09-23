@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     api_prefix: str = "/api/v1"
 
     cors_origins: list[str] = ["http://localhost:3000"]
+    api_key: str = ""
 
     database_url: str = "postgresql+psycopg://mcp:mcp@localhost:5432/mcp_auditor"
     redis_url: str = "redis://localhost:6379/0"
@@ -43,6 +44,7 @@ class Settings(BaseSettings):
 
     # Per-connection timeout (seconds) when discovering tools from an MCP server.
     mcp_discovery_timeout_seconds: float = 15.0
+    mcp_allowed_local_commands: list[str] = []
 
     @property
     def is_development(self) -> bool:

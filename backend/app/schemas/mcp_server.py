@@ -97,3 +97,16 @@ class MCPServerRead(BaseModel):
     last_discovery_status: DiscoveryStatus | None = None
     last_discovered_at: datetime | None = None
     last_discovery_error: str | None = None
+
+
+def redact_connection_config(source_type: SourceType, config: dict[str, Any]) -> dict[str, Any]:
+    """Return connection metadata without credential values."""
+    redacted = dict(config)
+    if source_type == SourceType.HTTP:
+        redacted["headers"] = {
+            name: (value if value and set(value) == {"*"} else "***")
+            for name, value in config.get("headers", {}).items()
+        }
+    elif source_type == SourceType.LOCAL_COMMAND:
+        redacted["env"] = {name: "***" for name in config.get("env", {})}
+    return redacted

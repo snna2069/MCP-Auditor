@@ -40,6 +40,11 @@ class MCPDiscoveryService:
         settings = get_settings()
 
         try:
+            if (
+                server.source_type.value == "LOCAL_COMMAND"
+                and connection_config["command"] not in settings.mcp_allowed_local_commands
+            ):
+                raise MCPClientError("Local command is not allowlisted for discovery.")
             client = build_mcp_client(
                 server.source_type,
                 connection_config,

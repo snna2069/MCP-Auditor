@@ -1,11 +1,15 @@
 """Shared pytest fixtures."""
 
+import json
 import os
+import sys
 
 # Ensure a valid Fernet key is present before any app module reads settings,
 # regardless of whether a local .env file defines one. Set only if unset so
 # a developer's real .env value (if present) still takes precedence.
 os.environ.setdefault("ENCRYPTION_KEY", "MTi6-EPnzQZbqxv82PJU2BwHcw92h4f9C1nDZZnlEJA=")
+os.environ.setdefault("API_KEY", "test-api-key")
+os.environ.setdefault("MCP_ALLOWED_LOCAL_COMMANDS", json.dumps([sys.executable]))
 
 import pytest
 from fastapi.testclient import TestClient
@@ -63,6 +67,6 @@ def client(db_session: Session) -> TestClient:
 
     app.dependency_overrides[get_db] = override_get_db
     try:
-        yield TestClient(app)
+        yield TestClient(app, headers={"X-API-Key": "test-api-key"})
     finally:
         app.dependency_overrides.clear()
