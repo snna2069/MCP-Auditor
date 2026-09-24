@@ -82,6 +82,7 @@ async def request_observability(request: Request, call_next) -> Response:
 def metrics_endpoint() -> Response:
     return Response(metrics.prometheus(), media_type="text/plain; version=0.0.4")
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,

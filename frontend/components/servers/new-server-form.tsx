@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
 import { ErrorState } from "@/components/shared/state-views";
@@ -107,7 +107,7 @@ export function NewServerForm() {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setValue,
     setError,
     formState: { errors },
@@ -116,7 +116,7 @@ export function NewServerForm() {
     defaultValues: { source_type: "HTTP" },
   });
 
-  const sourceType = watch("source_type");
+  const sourceType = useWatch({ control, name: "source_type" });
 
   const onSubmit = (values: FormValues) => {
     const result = buildConnectionConfig(values);

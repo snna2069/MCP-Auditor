@@ -284,6 +284,33 @@ ruff format .
 ruff check . --fix
 ```
 
+## Continuous Integration
+
+GitHub Actions runs [.github/workflows/ci.yml](./.github/workflows/ci.yml)
+for pull requests, pushes to `main`, and manual dispatches. The workflow
+contains independent, cached jobs so failures are easy to identify and
+unrelated checks can run in parallel:
+
+- **Backend quality and unit tests:** installs the pinned
+  `backend/requirements.txt`, checks Ruff formatting and linting, runs mypy
+  against `backend/app`, and runs tests not marked `integration`.
+- **Backend integration tests:** runs the tests marked `integration`,
+  covering FastAPI/database boundaries and the real MCP stdio subprocess
+  transport. Test dependencies remain self-contained, so CI does not start
+  unnecessary service containers.
+- **Frontend quality and build:** uses `npm ci` with
+  `frontend/package-lock.json`, then runs ESLint, `tsc --noEmit`, and the
+  optimized Next.js build.
+- **Dependency security:** runs `pip-audit` against the pinned Python
+  requirements and `npm audit --audit-level=high` against the frontend
+  lockfile.
+
+Python packages and npm downloads use the caches provided by
+`actions/setup-python` and `actions/setup-node`. Concurrent runs for the
+same branch are cancelled when superseded. Any formatting, lint, type,
+test, build, or high-severity dependency audit failure fails CI; the
+workflow performs no deployment.
+
 ## 4. Start the frontend (Next.js)
 
 ```powershell

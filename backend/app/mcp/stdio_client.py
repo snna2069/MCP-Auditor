@@ -6,6 +6,7 @@ import threading
 import time
 import uuid
 from datetime import UTC, datetime
+from typing import TextIO
 
 from app.mcp.base import MCPClient, MCPDiscoveryResult
 from app.mcp.exceptions import MCPClientError, MCPConnectionError, MCPProtocolError, MCPTimeoutError
@@ -65,9 +66,7 @@ class StdioMCPClient(MCPClient):
 
         output_queue: queue.Queue[object] = queue.Queue()
         output_bytes = [0]
-        self._deadline = time.monotonic() + min(
-            self._timeout, self._policy.timeout_seconds
-        )
+        self._deadline = time.monotonic() + min(self._timeout, self._policy.timeout_seconds)
         reader = threading.Thread(
             target=_pump_lines,
             args=(process.stdout, output_queue, self._policy.max_output_bytes, output_bytes),
@@ -102,7 +101,7 @@ class StdioMCPClient(MCPClient):
         cursor = None
         for _ in range(_MAX_PAGES):
             list_id = next_request_id()
-            params = {"cursor": cursor} if cursor else None
+            params: dict[str, str] | None = {"cursor": cursor} if cursor else None
             self._send(process, build_request("tools/list", params, list_id))
             result = parse_response(self._recv(process, output_queue), expected_id=list_id)
             tools.extend(parse_tools(result.get("tools", [])))
@@ -141,6 +140,8 @@ class StdioMCPClient(MCPClient):
             raise MCPConnectionError("MCP process closed stdout before responding.")
         if isinstance(line, _OutputLimitExceeded):
             raise MCPProtocolError("MCP output exceeded the configured limit.")
+        if not isinstance(line, str):
+            raise MCPProtocolError("MCP response had an invalid transport type.")
         try:
             return json.loads(line)
         except (TypeError, json.JSONDecodeError) as exc:
@@ -152,7 +153,10 @@ class _OutputLimitExceeded:
 
 
 def _pump_lines(
-    stream, output_queue: "queue.Queue[object]", maximum: int, output_count: list[int]
+    stream: TextIO,
+    output_queue: "queue.Queue[object]",
+    maximum: int,
+    output_count: list[int],
 ) -> None:
     try:
         for line in iter(stream.readline, ""):

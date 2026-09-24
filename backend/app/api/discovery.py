@@ -33,6 +33,12 @@ def discover_server(server_id: uuid.UUID, db: Session = Depends(get_db)) -> Disc
     except MCPServerNotFoundError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
+    if server.last_discovery_status is None or server.last_discovered_at is None:
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Discovery completed without a persisted result.",
+        )
+
     return DiscoveryResult(
         status=server.last_discovery_status,
         error=server.last_discovery_error,

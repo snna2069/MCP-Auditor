@@ -66,9 +66,7 @@ def test_tools_endpoint_empty_before_discovery(client: TestClient) -> None:
     assert response.json() == []
 
 
-def test_discover_local_command_server_succeeds(
-    client: TestClient, monkeypatch
-) -> None:
+def test_discover_local_command_server_succeeds(client: TestClient, monkeypatch) -> None:
     monkeypatch.setattr(stdio_client, "DockerSandboxBackend", SubprocessBackend)
     scenario = json.dumps(
         {

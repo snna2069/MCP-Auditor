@@ -74,7 +74,9 @@ class MCPDiscoveryService:
             logger.warning(
                 "mcp discovery failed",
                 extra=correlation_fields(
-                    audit_id=audit_id, server_id=server_id, failure_reason=type(exc).__name__,
+                    audit_id=audit_id,
+                    server_id=server_id,
+                    failure_reason=type(exc).__name__,
                     duration_seconds=elapsed(started),
                 ),
             )
@@ -91,7 +93,9 @@ class MCPDiscoveryService:
         logger.info(
             "mcp discovery completed",
             extra=correlation_fields(
-                audit_id=audit_id, server_id=server_id, tool_count=len(persisted),
+                audit_id=audit_id,
+                server_id=server_id,
+                tool_count=len(persisted),
                 duration_seconds=elapsed(started),
             ),
         )

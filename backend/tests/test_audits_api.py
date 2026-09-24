@@ -202,9 +202,7 @@ def test_list_findings_for_missing_audit_returns_404(client: TestClient) -> None
     assert response.status_code == 404
 
 
-def test_audit_runs_fresh_discovery_via_local_command(
-    client: TestClient, monkeypatch
-) -> None:
+def test_audit_runs_fresh_discovery_via_local_command(client: TestClient, monkeypatch) -> None:
     """Confirms the pipeline re-discovers (not just reuses stale data)."""
     import json
 

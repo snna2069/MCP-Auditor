@@ -66,7 +66,7 @@ class HttpMCPClient(MCPClient):
         cursor = None
         for _ in range(_MAX_PAGES):
             list_id = next_request_id()
-            params = {"cursor": cursor} if cursor else None
+            params: dict[str, str] | None = {"cursor": cursor} if cursor else None
             body = self._post(
                 client, build_request("tools/list", params, list_id), protocol_version
             )
@@ -128,7 +128,7 @@ def _validate_public_http_url(url: str) -> None:
         raise MCPConnectionError("MCP URL must use HTTP(S) and include a hostname.")
     try:
         addresses = {
-            sockaddr[4][0]
+            str(sockaddr[4][0])
             for sockaddr in socket.getaddrinfo(
                 parsed.hostname, parsed.port, type=socket.SOCK_STREAM
             )

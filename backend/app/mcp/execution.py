@@ -8,7 +8,7 @@ import subprocess
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Protocol
+from typing import Protocol, TextIO, cast
 
 from app.core.config import get_settings
 from app.core.observability import correlation_fields, metrics
@@ -39,9 +39,9 @@ class ExecutionRecord:
 
 
 class ExecutionProcess(Protocol):
-    stdin: object
-    stdout: object
-    stderr: object
+    stdin: TextIO
+    stdout: TextIO
+    stderr: TextIO
 
     def poll(self) -> int | None: ...
 
@@ -52,13 +52,16 @@ class ExecutionProcess(Protocol):
     def wait(self, timeout: float | None = None) -> int: ...
 
 
-class _DockerProcess:
-    def __init__(self, process: subprocess.Popen, container_name: str) -> None:
+class _ManagedProcess:
+    def __init__(self, process: subprocess.Popen[str], container_name: str | None = None) -> None:
+        if process.stdin is None or process.stdout is None or process.stderr is None:
+            process.kill()
+            raise RuntimeError("MCP process pipes were not created.")
         self._process = process
         self.container_name = container_name
-        self.stdin = process.stdin
-        self.stdout = process.stdout
-        self.stderr = process.stderr
+        self.stdin: TextIO = cast(TextIO, process.stdin)
+        self.stdout: TextIO = cast(TextIO, process.stdout)
+        self.stderr: TextIO = cast(TextIO, process.stderr)
 
     def poll(self) -> int | None:
         return self._process.poll()
@@ -159,7 +162,7 @@ class DockerSandboxBackend:
             raise RuntimeError("Could not start the MCP sandbox runtime.") from exc
         execution.status = "RUNNING"
         _log_execution(execution, "started")
-        return _DockerProcess(process, container_name)
+        return _ManagedProcess(process, container_name)
 
     def cleanup(self, process: ExecutionProcess, execution: ExecutionRecord) -> None:
         if process.poll() is None:
@@ -223,7 +226,7 @@ class SubprocessBackend:
             env=_restricted_environment(env),
         )
         execution.status = "RUNNING"
-        return process
+        return _ManagedProcess(process)
 
     def cleanup(self, process: ExecutionProcess, execution: ExecutionRecord) -> None:
         if process.poll() is None:

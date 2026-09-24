@@ -24,6 +24,24 @@ from app.main import app
 from app.models import Base
 from app.workers.celery_app import celery_app
 
+_INTEGRATION_TEST_FILES = {
+    "test_audits_api.py",
+    "test_discovery_api.py",
+    "test_health.py",
+    "test_mcp_stdio_client.py",
+    "test_observability.py",
+    "test_reports.py",
+    "test_servers.py",
+}
+
+
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    integration = pytest.mark.integration
+    for item in items:
+        if item.path.name in _INTEGRATION_TEST_FILES:
+            item.add_marker(integration)
+
+
 # Audits are triggered via Celery's `.delay()`. Running eagerly (in-process,
 # no broker/worker required) keeps tests deterministic and independent of
 # any real Redis instance - a standard, documented Celery testing pattern.

@@ -37,6 +37,8 @@ class ReportService:
             raise AuditNotFoundError(audit_id)
         if audit.status != AuditStatus.COMPLETED:
             raise AuditIncompleteError(audit_id)
+        if audit.overall_score is None or audit.risk_level is None:
+            raise AuditIncompleteError(audit_id)
 
         server = self._server_repo.get(audit.server_id)
         if server is None:  # The foreign key normally makes this impossible.

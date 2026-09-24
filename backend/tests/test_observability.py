@@ -15,9 +15,7 @@ def test_requests_are_correlated_and_metrics_are_exposed(client: TestClient) -> 
 def test_structured_formatter_redacts_sensitive_fields() -> None:
     import logging
 
-    record = logging.LogRecord(
-        "test", logging.INFO, __file__, 1, "safe", (), None
-    )
+    record = logging.LogRecord("test", logging.INFO, __file__, 1, "safe", (), None)
     record.api_token = "do-not-log"
     record.details = {"password": "do-not-log", "count": 1}
 

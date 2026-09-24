@@ -24,7 +24,9 @@ class JSONFormatter(logging.Formatter):
         }
 
         if record.exc_info:
-            payload["exception_type"] = record.exc_info[0].__name__
+            exception_type = record.exc_info[0]
+            if exception_type:
+                payload["exception_type"] = exception_type.__name__
 
         extra_keys = set(record.__dict__) - _STANDARD_LOG_RECORD_KEYS
         for key in extra_keys:
