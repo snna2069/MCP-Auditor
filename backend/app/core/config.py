@@ -13,6 +13,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # backend/app/core/config.py -> repo root is three levels up.
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _ROOT_ENV_FILE = _REPO_ROOT / ".env"
+_SECRETS_DIR = Path("/run/secrets")
 
 
 class Settings(BaseSettings):
@@ -21,6 +22,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=(_ROOT_ENV_FILE, ".env"),
         env_file_encoding="utf-8",
+        secrets_dir=_SECRETS_DIR if _SECRETS_DIR.is_dir() else None,
         extra="ignore",
     )
 

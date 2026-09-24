@@ -1,0 +1,169 @@
+name: mcp-auditor
+
+x-app-environment: &app-environment
+  APP_ENV: production
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  OBSERVABILITY_LOG_LEVEL: ${OBSERVABILITY_LOG_LEVEL:-INFO}
+  CORS_ORIGINS: '${CORS_ORIGINS:?CORS_ORIGINS must be set}'
+  MCP_ALLOWED_LOCAL_COMMANDS: "[]"
+  MCP_SANDBOX_IMAGE: ${MCP_SANDBOX_IMAGE:-mcp-auditor-mcp-sandbox:latest}
+  MCP_EXECUTION_MEMORY_LIMIT: ${MCP_EXECUTION_MEMORY_LIMIT:-256m}
+  MCP_EXECUTION_CPU_LIMIT: ${MCP_EXECUTION_CPU_LIMIT:-1.0}
+  MCP_EXECUTION_PIDS_LIMIT: ${MCP_EXECUTION_PIDS_LIMIT:-64}
+  MCP_EXECUTION_MAX_OUTPUT_BYTES: ${MCP_EXECUTION_MAX_OUTPUT_BYTES:-1048576}
+  RATE_LIMIT_WINDOW_SECONDS: ${RATE_LIMIT_WINDOW_SECONDS:-60}
+  RATE_LIMIT_REQUESTS: ${RATE_LIMIT_REQUESTS:-120}
+  RATE_LIMIT_DISCOVERIES: ${RATE_LIMIT_DISCOVERIES:-10}
+  RATE_LIMIT_AUDITS: ${RATE_LIMIT_AUDITS:-5}
+  RATE_LIMIT_REPORTS: ${RATE_LIMIT_REPORTS:-30}
+  MAX_ACTIVE_AUDITS_PER_SERVER: ${MAX_ACTIVE_AUDITS_PER_SERVER:-1}
+
+x-app-security: &app-security
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  read_only: true
+  tmpfs:
+    - /tmp:rw,noexec,nosuid,size=64m
+
+x-app-secrets: &app-secrets
+  - api_key
+  - encryption_key
+  - database_url
+  - redis_url
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB must be set}
+    secrets:
+      - postgres_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    secrets:
+      - redis_password
+    command:
+      - sh
+      - -ec
+      - exec redis-server --appendonly yes --requirepass "$$(cat /run/secrets/redis_password)"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - redis-cli --no-auth-warning -a "$$(cat /run/secrets/redis_password)" ping | grep PONG
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    security_opt:
+      - no-new-privileges:true
+
+  migrate:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: mcp-auditor-backend:${APP_IMAGE_TAG:?APP_IMAGE_TAG must be set}
+    environment: *app-environment
+    secrets: *app-secrets
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    <<: *app-security
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: mcp-auditor-backend:${APP_IMAGE_TAG:?APP_IMAGE_TAG must be set}
+    environment: *app-environment
+    secrets: *app-secrets
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    <<: *app-security
+
+  worker:
+    image: mcp-auditor-backend:${APP_IMAGE_TAG:?APP_IMAGE_TAG must be set}
+    environment: *app-environment
+    secrets: *app-secrets
+    command:
+      - celery
+      - -A
+      - app.workers.celery_app
+      - worker
+      - --loglevel=${LOG_LEVEL:-INFO}
+      - --concurrency=${CELERY_CONCURRENCY:-2}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    stop_grace_period: 30s
+    healthcheck:
+      test: ["CMD", "celery", "-A", "app.workers.celery_app", "inspect", "ping", "--timeout=5"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    <<: *app-security
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?NEXT_PUBLIC_API_URL must be set}
+    image: mcp-auditor-frontend:${APP_IMAGE_TAG:?APP_IMAGE_TAG must be set}
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    <<: *app-security
+
+volumes:
+  postgres_data:
+  redis_data:
+
+secrets:
+  api_key:
+    file: ${SECRETS_DIR:?SECRETS_DIR must be set}/api_key
+  encryption_key:
+    file: ${SECRETS_DIR:?SECRETS_DIR must be set}/encryption_key
+  database_url:
+    file: ${SECRETS_DIR:?SECRETS_DIR must be set}/database_url
+  redis_url:
+    file: ${SECRETS_DIR:?SECRETS_DIR must be set}/redis_url
+  postgres_password:
+    file: ${SECRETS_DIR:?SECRETS_DIR must be set}/postgres_password
+  redis_password:
+    file: ${SECRETS_DIR:?SECRETS_DIR must be set}/redis_password

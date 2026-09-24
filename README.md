@@ -155,6 +155,32 @@ Verify both containers are healthy:
 docker compose ps
 ```
 
+The default Compose invocation remains infrastructure-only for local
+development. Production uses the separate `docker-compose.prod.yml` file.
+Create a secret directory outside the repository containing files named
+`api_key`, `encryption_key`, `database_url`, `redis_url`,
+`postgres_password`, and `redis_password`. Set `SECRETS_DIR` to its absolute
+path and configure `POSTGRES_USER`, `POSTGRES_DB`, `APP_IMAGE_TAG`,
+`CORS_ORIGINS`, and `NEXT_PUBLIC_API_URL`, then run:
+
+```powershell
+docker compose -f docker-compose.prod.yml up --build -d
+```
+
+This starts a one-shot migration container, then health-gates the backend,
+Celery worker, and standalone Next.js frontend. Application containers run
+as non-root users with read-only filesystems, dropped capabilities, bounded
+temporary storage, and `no-new-privileges`. Database and application ports
+bind to `BIND_ADDRESS` (`127.0.0.1` by default); place an authenticated TLS
+reverse proxy in front of externally reachable production deployments.
+
+`NEXT_PUBLIC_API_URL` is a public browser build setting, not a secret.
+Changing it requires rebuilding the frontend image. Inject all credentials
+at container runtime through the deployment platform; never pass secrets as
+Docker build arguments. The worker is intentionally not given the Docker
+socket. Consequently, local-command MCP execution fails closed until a
+separate restricted execution service is configured.
+
 ## 3. Start the backend (FastAPI)
 
 ```powershell
