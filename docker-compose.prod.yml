@@ -64,13 +64,13 @@ services:
     command:
       - sh
       - -ec
-      - exec redis-server --appendonly yes --requirepass "$$(cat /run/secrets/redis_password)"
+      - exec redis-server --appendonly yes --requirepass "$$(tr -d '\r\n' < /run/secrets/redis_password)"
     volumes:
       - redis_data:/data
     healthcheck:
       test:
         - CMD-SHELL
-        - redis-cli --no-auth-warning -a "$$(cat /run/secrets/redis_password)" ping | grep PONG
+        - redis-cli --no-auth-warning -a "$$(tr -d '\r\n' < /run/secrets/redis_password)" ping | grep PONG
       interval: 5s
       timeout: 5s
       retries: 10
